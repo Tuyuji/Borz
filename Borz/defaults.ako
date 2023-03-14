@@ -1,0 +1,21 @@
+#Logging
+log.enable+
+log.level "Info"
+
+#Compilers
+compiler.c   &Gcc
+compiler.cxx &Gcc
+
+#Linkers
+linker.c   &Gcc
+linker.cxx &Gcc
+
+#Paths
+paths.output "$PROJECTDIR/bin"
+paths.int    "$PROJECTDIR/bin-int"
+
+#Multi-Threading settings
+mt.enable+
+mt.minThreadMem "368MB"
+# 0 or -1 for auto.
+mt.maxThreads   -1
