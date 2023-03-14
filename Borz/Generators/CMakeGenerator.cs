@@ -1,3 +1,5 @@
+using Borz.Languages.C;
+
 namespace Borz.Generators;
 
 public class CMakeGenerator : IGenerator

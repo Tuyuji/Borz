@@ -1,6 +1,4 @@
-using Spectre.Console;
-
-namespace Borz;
+namespace Borz.Languages.C;
 
 /*
  * Common interface for C/C++ compilers

@@ -3,7 +3,7 @@ using Microsoft.Extensions.FileSystemGlobbing;
 using Microsoft.Extensions.FileSystemGlobbing.Abstractions;
 using MoonSharp.Interpreter;
 
-namespace Borz;
+namespace Borz.Languages.C;
 
 [MoonSharpUserData]
 public class CProject : Project

@@ -1,7 +1,7 @@
 using Borz.Lua;
 using MoonSharp.Interpreter;
 
-namespace Borz;
+namespace Borz.Languages.C;
 [MoonSharpUserData]
 public class CppProject : CProject
 {

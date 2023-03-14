@@ -1,7 +1,6 @@
 using System.Diagnostics;
-using Borz.Compilers;
 
-namespace Borz.Builders;
+namespace Borz.Languages.C;
 
 public class CppBuilder : IBuilder
 {
