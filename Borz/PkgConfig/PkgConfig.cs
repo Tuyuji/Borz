@@ -4,13 +4,6 @@ public static class PkgConfig
 {
     private static readonly string pkgconifg = "pkg-config";
 
-    public enum VersionType
-    {
-        None,
-        GTOrEq,
-        LTOrEq,
-        Eq,
-    }
 
     private static UnixUtil.RunOutput RunPkgConfig(string cmd)
     {
@@ -54,8 +47,8 @@ public static class PkgConfig
         if (!DoesPkgExist(name, op, version))
             return null;
 
-        var nameVersion = $"\"{name} {GetPkgVersionFormat(op, version)}\"";
-
+        string nameVersion = "";
+        nameVersion = op == VersionType.None ? name : $"\"{name} {GetPkgVersionFormat(op, version)}\"";
 
         string modVersion = "";
         {

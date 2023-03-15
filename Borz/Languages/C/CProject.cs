@@ -6,9 +6,9 @@ using MoonSharp.Interpreter;
 namespace Borz.Languages.C;
 
 [MoonSharpUserData]
+[ProjectLanguage(Language.C)]
 public class CProject : Project
 {
-    
     public Dictionary<string, string?> Defines = new();
     public List<string> SourceFiles = new();
     public List<string> PublicIncludePaths = new();
@@ -18,36 +18,35 @@ public class CProject : Project
     public bool UsePIC = false;
     public string StdVersion = "";
 
-    public CProject(string name, BinType type, string directory = "", Language language = Language.C) : base(name, type, language, directory)
+    public CProject(string name, BinType type, string directory = "", Language language = Language.C) : base(name, type,
+        language, directory)
     {
     }
-    
-    
-    public static CProject New(Script script, string name, BinType type)
+
+    public static CProject Create(Script script, string name, BinType type)
     {
         var proj = new CProject(name, type, script.GetCwd());
         script.Globals.Set(name, DynValue.FromObject(script, proj));
         return proj;
     }
-    
+
     public void AddDefine(string name, string? value = null)
     {
-        if(Defines.ContainsKey(name))
+        if (Defines.ContainsKey(name))
             Defines[name] = value;
         else
             Defines.Add(name, value);
     }
 
-    
+
     public void AddLibraryPath(string path)
     {
-        
-        if(LibraryPaths.Contains(path))
+        if (LibraryPaths.Contains(path))
             return;
-        
+
         LibraryPaths.Add(path);
     }
-    
+
     public void AddIncludePath(string path, bool isPrivate = true)
     {
         if (isPrivate)
@@ -56,7 +55,8 @@ public class CProject : Project
                 return;
 
             PrivateIncludePaths.Add(path);
-        }else
+        }
+        else
         {
             if (PublicIncludePaths.Contains(path))
                 return;
@@ -64,31 +64,31 @@ public class CProject : Project
             PublicIncludePaths.Add(path);
         }
     }
-    
+
     public void AddIncludePaths(string[] paths, bool isPrivate = true)
     {
         foreach (string s in paths)
         {
-            AddIncludePath(s, isPrivate);   
+            AddIncludePath(s, isPrivate);
         }
     }
-    
+
     public void AddLink(string name)
     {
-        if(Links.Contains(name))
+        if (Links.Contains(name))
             return;
-        
+
         Links.Add(name);
     }
-    
+
     public void AddLinks(string[] names)
     {
         foreach (string s in names)
         {
-            AddLink(s);   
+            AddLink(s);
         }
     }
-    
+
     public void AddSourceGlob(string match)
     {
         Matcher matcher = new Matcher();
@@ -101,23 +101,20 @@ public class CProject : Project
             SourceFiles.Add(file.Path);
         }
     }
-    
+
     public void AddSourceFile(string path)
     {
-        if(SourceFiles.Contains(path))
+        if (SourceFiles.Contains(path))
             return;
-        
+
         SourceFiles.Add(path);
     }
-    
+
     public void AddSourceFiles(string[] paths)
     {
         foreach (string s in paths)
         {
-            AddSourceFile(s);   
+            AddSourceFile(s);
         }
     }
-
-    
-    
 }

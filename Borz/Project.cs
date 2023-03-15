@@ -1,3 +1,4 @@
+using System.Reflection;
 using MoonSharp.Interpreter;
 
 namespace Borz;
@@ -5,6 +6,24 @@ namespace Borz;
 [MoonSharpUserData]
 public abstract class Project
 {
+    public static Dictionary<Language, Type> ProjectTypes = new();
+
+    public static void Setup()
+    {
+        var types = AppDomain.CurrentDomain.GetAssemblies()
+            .SelectMany(s => s.GetTypes())
+            .Where(e => e.GetCustomAttribute<ProjectLanguageAttribute>() != null)
+            .Where(e => e.IsAssignableTo(typeof(Project)))
+            .ToArray();
+
+        foreach (var type in types)
+        {
+            var attr = type.GetCustomAttribute<ProjectLanguageAttribute>();
+            ProjectTypes.Add(attr!.Language, type);
+        }
+    }
+
+
     public string ProjectDirectory;
     public string Name;
     public BinType Type;
@@ -17,9 +36,9 @@ public abstract class Project
 
     public event EventHandler FinishedCompiling;
 
-    public void CallFinishedCompiling() => FinishedCompiling(this, EventArgs.Empty);
+    public void CallFinishedCompiling() => FinishedCompiling?.Invoke(this, EventArgs.Empty);
 
-    public Project(string name, BinType type, Language language, string directory = "")
+    public Project(string name, BinType type, Language language, string directory = "", bool addToWorkspace = true)
     {
         if (directory == String.Empty)
             directory = Directory.GetCurrentDirectory();
@@ -50,14 +69,28 @@ public abstract class Project
         this.Type = type;
         this.Language = language;
 
-        Workspace.Projects.Add(this);
+        if (addToWorkspace)
+            Workspace.Projects.Add(this);
+    }
+
+    public static dynamic Create(Script script, string name, BinType type, Language language)
+    {
+        var t = ProjectTypes[language];
+        //we need to call a static method on the type called Create
+        var method = t.GetMethod("Create");
+        if (method == null)
+            throw new Exception("Could not find Create method on type " + t.Name);
+        var p = (Project?)method.Invoke(null, new object[] { script, name, type });
+        if (p == null)
+            throw new Exception("Create method on type " + t.Name + " returned null");
+        return p;
     }
 
     public void AddDep(Project project)
     {
-        if(Dependencies.Contains(project))
+        if (Dependencies.Contains(project))
             return;
-        
+
         Dependencies.Add(project);
     }
 
@@ -66,11 +99,11 @@ public abstract class Project
         //See if path is absolute
         if (Path.IsPathRooted(path))
             return path;
-        
+
         //If not, make it absolute
         return Path.Combine(ProjectDirectory, path);
     }
-    
+
     public string[] GetPathsAbs(string[] paths)
     {
         var absPaths = new string[paths.Length];
@@ -81,5 +114,4 @@ public abstract class Project
 
         return absPaths;
     }
-
 }

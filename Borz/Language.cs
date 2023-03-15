@@ -3,9 +3,9 @@ namespace Borz;
 [BorzUserData]
 public enum Language : uint
 {
-    C =      0,
-    Cpp =    1,
-    CSharp = 2,
-    Java =   3,
-    
+    Unknown = 0,
+    C = 1,
+    Cpp = 2,
+    CSharp = 3,
+    Java = 4,
 }

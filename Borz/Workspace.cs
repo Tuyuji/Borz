@@ -1,16 +1,12 @@
-using System.Reflection;
-using System.Reflection.Metadata.Ecma335;
 using AkoSharp;
 using Borz.Lua;
 using MoonSharp.Interpreter;
 using MoonSharp.Interpreter.Loaders;
-using Spectre.Console;
 
 namespace Borz;
 
 public static class Workspace
 {
-    
     public static string Location = String.Empty;
     public static List<Project> Projects = new();
     public static List<string> ExecutedBorzFiles = new();
@@ -18,17 +14,19 @@ public static class Workspace
     //Does init for workspace and running the inital borz script in current directory
     public static void Init()
     {
+        Project.Setup();
         ((ScriptLoaderBase)Script.DefaultOptions.ScriptLoader).ModulePaths = new string[] { "./?", "./?.lua" };
         ScriptRunner.RegisterTypes();
 
         Location = Directory.GetCurrentDirectory();
 
         var projectConfig = Path.Combine(Location, "borzsettings.ako");
-        if(File.Exists(projectConfig))
-            Deserializer.FromString(Utils.Config.GetLayer(ConfigLayers.LayerType.Workspace), File.ReadAllText(projectConfig));
-        
+        if (File.Exists(projectConfig))
+            Deserializer.FromString(Utils.Config.GetLayer(ConfigLayers.LayerType.Workspace),
+                File.ReadAllText(projectConfig));
+
         var userProjectConfig = Path.Combine(Workspace.Location, ".borz", "usersettings.ako");
-        
+
         Run();
     }
 
@@ -69,6 +67,5 @@ public static class Workspace
     {
         Workspace.Projects.Clear();
         Workspace.ExecutedBorzFiles.Clear();
-        
     }
 }
