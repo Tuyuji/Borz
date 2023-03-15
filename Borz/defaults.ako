@@ -9,6 +9,10 @@ compiler.cxx &Gcc
 #Linkers
 linker.c   &Gcc
 linker.cxx &Gcc
+
+#Not setting this to true for default since
+#I don't know if GCC will error out if its not found.
+#TODO: Have a check if mold exists and prefer it if it does.
 linker.mold-
 
 #Paths
