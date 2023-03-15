@@ -2,15 +2,26 @@ using System.Reflection;
 using AkoSharp;
 using Borz.Platform;
 using ByteSizeLib;
-using Spectre.Console;
 
 namespace Borz;
 
 public static class Utils
 {
     public static ConfigLayers Config = new();
-    
+
     public static ParallelOptions ParallelOptions = new();
+
+    public static bool UseMold
+    {
+        get
+        {
+            bool use = false;
+            var conf = Utils.Config.Get("linker", "mold");
+            if (conf == true)
+                use = true;
+            return use;
+        }
+    }
 
     private static void SetupDefaults()
     {
@@ -22,7 +33,6 @@ public static class Utils
             string result = reader.ReadToEnd();
             Deserializer.FromString(Config.GetLayer(ConfigLayers.LayerType.Defaults), result);
         }
-        
     }
 
     public static void Init()
@@ -34,10 +44,10 @@ public static class Utils
             Directory.CreateDirectory(configFolder);
 
         var configFile = Path.Combine(configFolder, "config.ako");
-        
+
         //Load defaults into config
         SetupDefaults();
-        
+
         if (File.Exists(configFile))
         {
             Deserializer.FromString(Config.GetLayer(ConfigLayers.LayerType.UserGobal), File.ReadAllText(configFile));
@@ -59,6 +69,7 @@ public static class Utils
             {
                 MugiLog.Error("Failed to parse log level from config, defaulting to Info.");
             }
+
             MugiLog.MinLevel = level;
         }
     }
@@ -70,15 +81,15 @@ public static class Utils
         var perThreadMinMemoryGB = ByteSize.Parse(perThreadMinMemory).GigaBytes;
 
         var maxCpuCount = Environment.ProcessorCount;
-            
+
         var maxReqThreads = (int)Config.Get("mt", "maxThreads");
         if (maxReqThreads == -1 || maxReqThreads == 0)
         {
             //Use cpu max
             maxReqThreads = maxCpuCount;
         }
-            
-        if(maxReqThreads > maxCpuCount)
+
+        if (maxReqThreads > maxCpuCount)
         {
             maxReqThreads = maxCpuCount;
             MugiLog.Warning($"Max threads requested is greater than the number of CPUs, capping at {maxCpuCount}.");
@@ -87,28 +98,27 @@ public static class Utils
         var memoryInfo = IPlatform.Instance;
         var totalMemory = memoryInfo.GetTotalMemory();
         var availableMemory = memoryInfo.GetAvailableMemory();
-            
+
         var totalMemoryGB = totalMemory.GigaBytes;
         var availableMemoryGB = availableMemory.GigaBytes;
 
         var usableThreadCount = Convert.ToInt32(Math.Floor(availableMemoryGB / perThreadMinMemoryGB));
-        if(usableThreadCount > maxCpuCount)
+        if (usableThreadCount > maxCpuCount)
             usableThreadCount = maxCpuCount;
-            
+
         MugiLog.Debug("Total Memory: " + totalMemory);
         MugiLog.Debug("Available Memory: " + availableMemory);
         MugiLog.Debug("Per Thread Min Memory: " + perThreadMinMemory);
         MugiLog.Debug("Max Threads: " + maxReqThreads);
-            
+
         MugiLog.Debug($"Using {usableThreadCount} threads, " +
                       $"({availableMemoryGB:F2}GB/{perThreadMinMemoryGB:F2}GB = " +
-                      $"{availableMemoryGB/perThreadMinMemoryGB:F2})");
-            
-            
-            
+                      $"{availableMemoryGB / perThreadMinMemoryGB:F2})");
+
+
         ParallelOptions.MaxDegreeOfParallelism = usableThreadCount;
     }
-    
+
     public static T? CreateInstance<T>(this Type type, params object?[]? args)
     {
         return (T?)Activator.CreateInstance(type, args);
@@ -119,6 +129,5 @@ public static class Utils
         if (!_justLog) return UnixUtil.RunCmd(command, args, workingDir);
         MugiLog.Info($"{command} {args}");
         return new UnixUtil.RunOutput(String.Empty, String.Empty, 0);
-
     }
 }

@@ -9,18 +9,6 @@ public class GccCompiler : ICCompiler
 {
     public bool JustLog { get; set; }
 
-    private bool UseMold
-    {
-        get
-        {
-            bool use = false;
-            var conf = Utils.Config.Get("linker", "mold");
-            if (conf == true)
-                use = true;
-            return use;
-        }
-    }
-
     public GccCompiler()
     {
     }
@@ -129,7 +117,7 @@ public class GccCompiler : ICCompiler
         }
 
 
-        if (UseMold)
+        if (Utils.UseMold)
         {
             cmdArgs.Add("-fuse-ld=mold");
         }
