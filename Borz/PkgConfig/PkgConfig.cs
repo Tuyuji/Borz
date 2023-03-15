@@ -49,7 +49,6 @@ public static class PkgConfig
         return result.Exitcode == 0;
     }
 
-    //Example version: >=VERSION =VERSION <=VERSION 
     public static PkgConfigInfo? GetPackage(string name, VersionType op = VersionType.None, string version = "")
     {
         if (!DoesPkgExist(name, op, version))
