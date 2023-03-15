@@ -1,5 +1,4 @@
 using Borz.Languages.C;
-using Borz.PkgConfig;
 
 namespace Borz.Generators;
 
@@ -94,25 +93,38 @@ public class CMakeGenerator : IGenerator
         }
 
         //setup headers
-        if (project.PublicIncludePaths.Count > 0)
+        if (project.PublicIncludePaths.Count > 0 || project.PkgDeps.Count > 0)
+        {
             file.WriteLine(
-                $"target_include_directories({project.Name} PUBLIC {StrListToCMake(ProjectFilesToAbsolute(project, project.PublicIncludePaths))})");
+                $"target_include_directories({project.Name} PUBLIC {StrListToCMake(ProjectFilesToAbsolute(project, project.PublicIncludePaths))}");
 
-        if (project.PrivateIncludePaths.Count > 0 || project.Dependencies.Count > 0)
+            foreach (var include in
+                     project.PkgDeps.Where(pkgDep => pkgDep.Value)
+                         .SelectMany(pkgDep => pkgDep.Key.Includes))
+            {
+                file.WriteLine(include);
+            }
+
+            file.WriteLine(")");
+        }
+
+        if (project.PrivateIncludePaths.Count > 0 || project.PkgDeps.Count > 0)
         {
             file.WriteLine(
                 $"target_include_directories({project.Name} PRIVATE {StrListToCMake(ProjectFilesToAbsolute(project, project.PrivateIncludePaths))}");
 
-            foreach (var dependency in project.Dependencies)
-                if (dependency is PkgConfigProject pkg)
-                    foreach (var pkgIncludePath in pkg.IncludePaths)
-                        file.WriteLine(pkgIncludePath);
+            foreach (var include in
+                     project.PkgDeps.Where(pkgDep => pkgDep.Value == false)
+                         .SelectMany(pkgDep => pkgDep.Key.Includes))
+            {
+                file.WriteLine(include);
+            }
 
             file.WriteLine(")");
         }
 
         //setup defines
-        if (project.Defines.Count > 0 || project.Dependencies.Count > 0)
+        if (project.Defines.Count > 0 || project.PkgDeps.Count > 0)
         {
             file.WriteLine($"target_compile_definitions({project.Name} PUBLIC ");
             foreach (var define in project.Defines)
@@ -120,29 +132,30 @@ public class CMakeGenerator : IGenerator
                 file.WriteLine(define.Value == null ? $"-D{define.Key}" : $"-D{define.Key}={define.Value}");
             }
 
-            foreach (var dependency in project.Dependencies)
-                if (dependency is PkgConfigProject pkg)
-                    foreach (var define in pkg.Defines)
-                        file.WriteLine(define.Value == null ? $"-D{define.Key}" : $"-D{define.Key}={define.Value}");
+            foreach (var valuePair in project.PkgDeps.SelectMany(e => e.Key.Defines))
+            {
+                file.WriteLine(valuePair.Value == null ? $"-D{valuePair.Key}" : $"-D{valuePair.Key}={valuePair.Value}");
+            }
 
             file.WriteLine(")");
         }
 
         //setup library paths
-        if (project.LibraryPaths.Count > 0 || project.Dependencies.Count > 0)
+        if (project.LibraryPaths.Count > 0 || project.PkgDeps.Count > 0)
         {
             file.WriteLine("target_link_directories(" + project.Name + " PUBLIC ");
             file.WriteLine(StrListToCMake(ProjectFilesToAbsolute(project, project.LibraryPaths)));
-            foreach (var dependency in project.Dependencies)
-                if (dependency is PkgConfigProject pkg)
-                    foreach (var libraryPath in pkg.LibraryPaths)
-                        file.WriteLine(libraryPath);
+
+            foreach (var libraryPath in project.PkgDeps.SelectMany(pkg => pkg.Key.LibDirs))
+            {
+                file.WriteLine(libraryPath);
+            }
 
             file.WriteLine(")");
         }
 
         //setup libraries
-        if (project.Links.Count > 0 || project.Dependencies.Count > 0)
+        if (project.Links.Count > 0 || project.Dependencies.Count > 0 || project.PkgDeps.Count > 0)
         {
             file.WriteLine("target_link_libraries(" + project.Name + " PUBLIC ");
             foreach (var library in project.Links)
@@ -152,15 +165,12 @@ public class CMakeGenerator : IGenerator
 
             foreach (var projectDependency in project.Dependencies)
             {
-                if (projectDependency is PkgConfigProject pkgConfigProject)
-                {
-                    foreach (var library in pkgConfigProject.Libraries)
-                        file.WriteLine(library);
-                }
-                else
-                {
-                    file.WriteLine(projectDependency.Name);
-                }
+                file.WriteLine(projectDependency.Name);
+            }
+
+            foreach (var library in project.PkgDeps.SelectMany(pkgDep => pkgDep.Key.Libs))
+            {
+                file.WriteLine(library);
             }
 
             file.WriteLine(")");

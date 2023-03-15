@@ -1,4 +1,5 @@
 using AkoSharp;
+using Borz.Languages.C;
 using Borz.PkgConfig;
 using MoonSharp.Interpreter;
 
@@ -30,7 +31,48 @@ public static class LuaPkgConf
         return new KeyValuePair<VersionType, string>(versionOp, input);
     }
 
-    public static PkgConfigProject? Query(string name, bool required = true, string versionIn = "")
+    private static PkgDep ConvertPkgConfigInfoToPkgDep(PkgConfigInfo info)
+    {
+        var libPaths = new List<string>();
+        var libs = new List<string>();
+        var includePaths = new List<string>();
+        var defines = new Dictionary<string, string?>();
+        foreach (var flag in info.CFlags)
+        {
+            if (flag.StartsWith("-L"))
+            {
+                libPaths.Add(flag[2..]);
+            }
+            else if (flag.StartsWith("-I"))
+            {
+                includePaths.Add(flag[2..]);
+            }
+            else if (flag.StartsWith("-D"))
+            {
+                var define = flag[2..];
+                var split = define.Split('=');
+                if (split.Length == 2)
+                {
+                    defines[split[0]] = split[1];
+                }
+                else
+                {
+                    defines[split[0]] = null;
+                }
+            }
+        }
+
+        foreach (var lib in info.Libs)
+        {
+            if (lib.StartsWith("-l"))
+                libs.Add(lib[2..]);
+        }
+
+
+        return new PkgDep(libs.ToArray(), libPaths.ToArray(), defines, includePaths.ToArray(), false);
+    }
+
+    public static PkgDep? Query(string name, bool required = true, string versionIn = "")
     {
         var (versionOp, version) = ConvertVersionStringToPair(versionIn);
 
@@ -40,17 +82,17 @@ public static class LuaPkgConf
             throw new PackageNotFoundException(name, versionOp, version);
         }
 
-        return pkg == null ? null : new PkgConfigProject(pkg);
+        return pkg == null ? null : ConvertPkgConfigInfoToPkgDep(pkg);
     }
 
-    public static IDictionary<string, PkgConfigProject?> FromAko(Script script, string akoFile)
+    public static IDictionary<string, PkgDep?> FromAko(Script script, string akoFile)
     {
         var akoLoc = Util.GetAbsolute(script, akoFile);
         var ako = Deserializer.FromString(File.ReadAllText(akoLoc));
         if (ako.Type != AkoVar.VarType.TABLE)
             throw new Exception("Ako file must be a table");
 
-        var dict = new Dictionary<string, PkgConfigProject?>();
+        var dict = new Dictionary<string, PkgDep?>();
         foreach (var (key, value) in ako.TableValue)
         {
             var pkgName = key;
@@ -76,7 +118,7 @@ public static class LuaPkgConf
                 throw new PackageNotFoundException(pkgName, versionOp, version);
             }
 
-            dict.Add(key, pkg == null ? null : new PkgConfigProject(pkg));
+            dict.Add(key, pkg == null ? null : ConvertPkgConfigInfoToPkgDep(pkg));
         }
 
         return dict;

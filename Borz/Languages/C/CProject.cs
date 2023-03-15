@@ -15,6 +15,7 @@ public class CProject : Project
     public List<string> PrivateIncludePaths = new();
     public List<string> LibraryPaths = new();
     public List<string> Links = new();
+    public Dictionary<PkgDep, bool> PkgDeps = new();
     public bool UsePIC = false;
     public string StdVersion = "";
 
@@ -28,6 +29,13 @@ public class CProject : Project
         var proj = new CProject(name, type, script.GetCwd());
         script.Globals.Set(name, DynValue.FromObject(script, proj));
         return proj;
+    }
+
+    public void AddDep(PkgDep dep, bool isPublic = false)
+    {
+        if (PkgDeps.ContainsKey(dep))
+            return;
+        PkgDeps.Add(dep, isPublic);
     }
 
     public void AddDefine(string name, string? value = null)
@@ -117,4 +125,141 @@ public class CProject : Project
             AddSourceFile(s);
         }
     }
+
+    #region Compiler Api
+
+    //This is for Compilers or Generators to use
+    //It will return all the include paths for this project 
+    public string[] GetIncludePaths()
+    {
+        List<string> paths = new();
+        paths.AddRange(PublicIncludePaths);
+        paths.AddRange(PrivateIncludePaths);
+        foreach (var dep in PkgDeps)
+        {
+            paths.AddRange(dep.Key.Includes);
+        }
+
+        foreach (var dependency in Dependencies)
+        {
+            if (dependency is CppProject cppProject)
+            {
+                paths.AddRange(cppProject.GetPublicIncludePaths());
+            }
+            else if (dependency is CProject cProject)
+            {
+                paths.AddRange(cProject.GetPublicIncludePaths());
+            }
+        }
+
+        return paths.ToArray();
+    }
+
+    public string[] GetPublicIncludePaths()
+    {
+        List<string> paths = new();
+        paths.AddRange(GetPathsAbs(PublicIncludePaths.ToArray()));
+
+        //Already absolute
+        foreach (var dep in PkgDeps.Where(dep => dep.Value))
+        {
+            paths.AddRange(dep.Key.Includes);
+        }
+
+        foreach (var dependency in Dependencies)
+        {
+            if (dependency is CppProject cppProject)
+            {
+                paths.AddRange(cppProject.GetPublicIncludePaths());
+            }
+            else if (dependency is CProject cProject)
+            {
+                paths.AddRange(cProject.GetPublicIncludePaths());
+            }
+        }
+
+        return paths.ToArray();
+    }
+
+    public string[] GetLibraryPaths()
+    {
+        List<string> paths = new();
+        //make sure its absolute
+        paths.AddRange(
+            LibraryPaths.Select(e => Path.IsPathRooted(e) ? e : Path.Combine(ProjectDirectory, e)));
+
+        //PkgDeps are absolute
+        foreach (var dep in PkgDeps)
+        {
+            paths.AddRange(dep.Key.LibDirs);
+        }
+
+        foreach (var dependency in Dependencies)
+        {
+            switch (dependency)
+            {
+                case CppProject cppProject:
+                    paths.Add(cppProject.GetPathAbs(cppProject.OutputDirectory));
+                    break;
+                case CProject cProject:
+                    paths.Add(cProject.GetPathAbs(cProject.OutputDirectory));
+                    break;
+            }
+        }
+
+        return paths.ToArray();
+    }
+
+    public string[] GetRPaths(string outputDir)
+    {
+        //needs to be relative to the output dir
+        List<string> paths = new();
+        foreach (var dep in PkgDeps)
+        {
+            if (dep.Key.RequiresRpath)
+                paths.AddRange(dep.Key.LibDirs.Select(e => Path.GetRelativePath(outputDir, e)));
+        }
+
+        foreach (var dependency in Dependencies)
+        {
+            switch (dependency)
+            {
+                case CppProject cppProject:
+                    paths.Add(Path.GetRelativePath(outputDir, cppProject.GetPathAbs(cppProject.OutputDirectory)));
+                    break;
+                case CProject cProject:
+                    paths.Add(Path.GetRelativePath(outputDir, cProject.GetPathAbs(cProject.OutputDirectory)));
+                    break;
+            }
+        }
+
+        return paths.ToArray();
+    }
+
+    public string[] GetLibraries()
+    {
+        List<string> libs = new();
+        libs.AddRange(Links);
+        foreach (var dep in PkgDeps)
+        {
+            libs.AddRange(dep.Key.Libs);
+        }
+
+        foreach (var dependency in Dependencies)
+        {
+            switch (dependency)
+            {
+                case CppProject cppProject:
+                    libs.Add(cppProject.Name);
+                    break;
+                case CProject cProject:
+                    libs.Add(cProject.Name);
+                    break;
+            }
+        }
+
+        return libs.ToArray();
+    }
+
+    #endregion
 }

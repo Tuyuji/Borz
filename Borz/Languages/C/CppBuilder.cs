@@ -9,10 +9,10 @@ public class CppBuilder : IBuilder
         if (!Directory.Exists(path))
             Directory.CreateDirectory(path);
     }
-    
+
     public bool Build(Project inProj, bool justLog)
     {
-        CProject project = (CProject) inProj;
+        CProject project = (CProject)inProj;
         //make sure inProj is a CppProject or CProject
         if (inProj is not CppProject)
         {
@@ -40,27 +40,27 @@ public class CppBuilder : IBuilder
             MugiLog.Error($"Can't use linker {linkerType.Name} because: {reason}");
             return false;
         }
-        
+
         compiler.SetJustLog(justLog);
         linker.SetJustLog(justLog);
-        
+
         MugiLog.Info($"Using compiler: {compilerType.Name}");
         MugiLog.Info($"Using linker: {linkerType.Name}");
-        
+
         string outputDir = project.OutputDirectory;
         string intDir = project.IntermediateDirectory;
-        
+
         CheckFolder(outputDir);
         CheckFolder(intDir);
         List<string> objects = new List<string>();
-        
-        
+
+
         Stopwatch stopwatch = new Stopwatch();
         MugiLog.Info("Compiling project: " + project.Name);
-        uint totalFiles = (uint) project.SourceFiles.Count;
+        uint totalFiles = (uint)project.SourceFiles.Count;
         uint currentFile = 0;
         stopwatch.Restart();
-        Parallel.For(0, project.SourceFiles.Count, Utils.ParallelOptions, i =>
+        var objForBuild = Parallel.For(0, project.SourceFiles.Count, Utils.ParallelOptions, i =>
         {
             var sourceFile = project.GetPathAbs(project.SourceFiles[i]);
             //Dont care for headers.
@@ -71,14 +71,14 @@ public class CppBuilder : IBuilder
             }
 
             MugiLog.Info($"[{i}/{totalFiles}] Compiling {sourceFile}");
-                
+
             string objFilePath = Path.Combine(
                 project.IntermediateDirectory,
                 Path.GetFileNameWithoutExtension(sourceFile) + ".o");
 
             var objFileLastWrite = File.GetLastWriteTime(objFilePath);
             var sourceFileLastWrite = File.GetLastWriteTime(sourceFile);
-            
+
 
             if (!File.Exists(objFilePath) | objFileLastWrite < sourceFileLastWrite)
             {
@@ -92,13 +92,16 @@ public class CppBuilder : IBuilder
                     throw execp;
                 }
             }
-                
+
             objects.Add(objFilePath);
         });
-            
+
+        if (!objForBuild.IsCompleted)
+            MugiLog.Fatal("Shouldn't happen");
+
         stopwatch.Stop();
         var compileTime = stopwatch.ElapsedMilliseconds;
-        
+
         MugiLog.Info("Linking project: " + project.Name);
         stopwatch.Restart();
         var result = linker.LinkProject(project, objects.ToArray());
@@ -108,14 +111,15 @@ public class CppBuilder : IBuilder
             MugiLog.Fatal(result.Error);
             throw execp;
         }
+
         stopwatch.Stop();
         var linkTime = stopwatch.ElapsedMilliseconds;
-        
+
         MugiLog.Info($"Compile / Link time : {compileTime}ms / {linkTime}ms");
         MugiLog.Info($"Finished {project.Name}");
 
         project.CallFinishedCompiling();
-        
+
         return true;
     }
 }

@@ -1,6 +1,5 @@
 using AkoSharp;
 using Borz.Languages.C;
-using Borz.PkgConfig;
 using Microsoft.VisualBasic;
 
 namespace Borz.Compilers;
@@ -33,38 +32,8 @@ public class GccCompiler : ICCompiler
         foreach (var (key, value) in project.Defines)
             cmdArgs.Add(value == null ? $"-D{key}" : $"-D{key}={value}");
 
-        foreach (var projectDependency in project.Dependencies)
-        {
-            if (projectDependency is CppProject cppProject)
-            {
-                var includePath = cppProject.GetPathsAbs(cppProject.PublicIncludePaths.ToArray());
-                cmdArgs.AddRange(includePath.Select(s => $"-I{s}"));
-            }
-            else if (projectDependency is CProject cProject)
-            {
-                var includePath = cProject.GetPathsAbs(cProject.PublicIncludePaths.ToArray());
-                cmdArgs.AddRange(includePath.Select(s => $"-I{s}"));
-            }
-            else if (projectDependency is PkgConfigProject pkg)
-            {
-                //This is a pkgconfig project, so we need to add the include paths, pkgconifg projects always are absolute
-                cmdArgs.AddRange(pkg.IncludePaths.Select(s => $"-I{s}"));
-                //also defines
-                foreach (var (key, value) in pkg.Defines)
-                    cmdArgs.Add(value == null ? $"-D{key}" : $"-D{key}={value}");
-            }
-            else
-            {
-                MugiLog.Error(
-                    $"GCC: Unknown dependency type {projectDependency.GetType().Name} for {projectDependency.Name}");
-            }
-        }
-
-        foreach (var includePath in project.PrivateIncludePaths)
-            cmdArgs.Add($"-I{includePath}");
-
-        foreach (var includePath in project.PublicIncludePaths)
-            cmdArgs.Add($"-I{includePath}");
+        var depIncludes = project.GetIncludePaths();
+        cmdArgs.AddRange(depIncludes.Select(includePath => $"-I{includePath}"));
 
         if (project.UsePIC)
             cmdArgs.Add("-fPIC");
@@ -129,64 +98,16 @@ public class GccCompiler : ICCompiler
 
         cmdArgs.AddRange(objects);
 
-        foreach (var libraryPath in project.LibraryPaths)
-        {
+        foreach (var libraryPath in project.GetLibraryPaths())
             cmdArgs.Add($"-L{libraryPath}");
-        }
 
-        List<string> rpaths = new();
-
-        //setup library paths for dependencies
-        foreach (Project projectDependency in project.Dependencies)
-        {
-            if (projectDependency is CppProject cppProject)
-            {
-                var libraryPath = cppProject.GetPathAbs(cppProject.OutputDirectory);
-                cmdArgs.Add($"-L{libraryPath}");
-                //need to make sure rpath is set for the library
-                //Figure out the relative path from the output directory to the library
-                var relativePath = Path.GetRelativePath(project.GetPathAbs(project.OutputDirectory), libraryPath);
-                rpaths.Add(relativePath);
-            }
-            else if (projectDependency is CProject cProject)
-            {
-                var libraryPath = cProject.GetPathAbs(cProject.OutputDirectory);
-                cmdArgs.Add($"-L{libraryPath}");
-                var relativePath = Path.GetRelativePath(project.GetPathAbs(project.OutputDirectory), libraryPath);
-                rpaths.Add(relativePath);
-            }
-            else if (projectDependency is PkgConfigProject pkg)
-            {
-                //This is a pkgconfig project, so we need to add the library paths, pkgconifg projects always are absolute
-                cmdArgs.AddRange(pkg.LibraryPaths.Select(s => $"-L{s}"));
-            }
-        }
-
-        foreach (var link in project.Links)
+        foreach (var link in project.GetLibraries())
         {
             cmdArgs.Add($"-l{link}");
         }
 
-        foreach (var rpath in rpaths)
-        {
+        foreach (var rpath in project.GetRPaths(unknownProject.GetPathAbs(unknownProject.OutputDirectory)))
             cmdArgs.Add($"-Wl,-rpath={rpath}");
-        }
-
-        foreach (Project projectDependency in project.Dependencies)
-        {
-            if (projectDependency is CppProject cppProject)
-            {
-                cmdArgs.Add("-l" + cppProject.Name);
-            }
-            else if (projectDependency is CProject cProject)
-            {
-                cmdArgs.Add("-l" + cProject.Name);
-            }
-            else if (projectDependency is PkgConfigProject pkg)
-            {
-                cmdArgs.AddRange(pkg.Libraries.Select(s => $"-l{s}"));
-            }
-        }
 
         switch (project.Type)
         {
