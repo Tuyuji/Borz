@@ -9,6 +9,7 @@ compiler.cxx &Gcc
 #Linkers
 linker.c   &Gcc
 linker.cxx &Gcc
+linker.mold-
 
 #Paths
 paths.output "$PROJECTDIR/bin"
