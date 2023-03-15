@@ -261,5 +261,18 @@ public class CProject : Project
         return libs.ToArray();
     }
 
+    public IDictionary<string, string?> GetDefines()
+    {
+        Dictionary<string, string?> defs =
+            Defines.ToDictionary(valuePair => valuePair.Key, valuePair => valuePair.Value);
+
+        foreach (var valuePair in PkgDeps.SelectMany(dep => dep.Key.Defines))
+        {
+            defs.Add(valuePair.Key, valuePair.Value);
+        }
+
+        return defs;
+    }
+
     #endregion
 }

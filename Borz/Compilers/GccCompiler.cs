@@ -29,7 +29,7 @@ public class GccCompiler : ICCompiler
     {
         List<string> cmdArgs = new();
 
-        foreach (var (key, value) in project.Defines)
+        foreach (var (key, value) in project.GetDefines())
             cmdArgs.Add(value == null ? $"-D{key}" : $"-D{key}={value}");
 
         var depIncludes = project.GetIncludePaths();
@@ -41,7 +41,7 @@ public class GccCompiler : ICCompiler
         if (project.StdVersion != String.Empty)
             cmdArgs.Add($"-std=" + project.StdVersion);
 
-        foreach (var link in project.Links)
+        foreach (var link in project.GetLibraries())
             cmdArgs.Add($"-l{link}");
 
         cmdArgs.AddRange(new[] { "-o", outputFile, "-c", sourceFile });
@@ -102,9 +102,7 @@ public class GccCompiler : ICCompiler
             cmdArgs.Add($"-L{libraryPath}");
 
         foreach (var link in project.GetLibraries())
-        {
             cmdArgs.Add($"-l{link}");
-        }
 
         foreach (var rpath in project.GetRPaths(unknownProject.GetPathAbs(unknownProject.OutputDirectory)))
             cmdArgs.Add($"-Wl,-rpath={rpath}");
