@@ -1,4 +1,5 @@
 using System.Reflection;
+using System.Runtime.InteropServices;
 using AkoSharp;
 using Borz.Core.Generators;
 using Borz.Core.Platform;
@@ -8,11 +9,18 @@ namespace Borz.Core;
 
 public static class Borz
 {
+    public static ConfigLayers<ConfLevel> Config = new();
+
+    public static ParallelOptions ParallelOptions = new();
+
     public static void Init()
     {
         MugiLog.Init();
 
-        ShortTypeRegistry.Init();
+        ShortTypeRegistry.AutoRegister();
+
+        //Load up platform assembly
+        LoadPlatformAssembly();
 
         var configFolder = Path.Combine(IPlatform.Instance.GetUserConfigPath(), "borz");
         if (!Directory.Exists(configFolder))
@@ -25,7 +33,7 @@ public static class Borz
 
         if (File.Exists(configFile))
         {
-            Deserializer.FromString(Config.GetLayer(ConfigLayers.LayerType.UserGobal), File.ReadAllText(configFile));
+            Deserializer.FromString(Config.GetLayer(ConfLevel.UserGobal), File.ReadAllText(configFile));
         }
         else
         {
@@ -35,15 +43,54 @@ public static class Borz
         ConfigChanged();
     }
 
+    private static void LoadPlatformAssembly()
+    {
+        var dllName = "";
+        if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
+        {
+            dllName = "Borz.Linux";
+        }
+        else if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
+        {
+            dllName = "Borz.MacOS";
+        }
+        else if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+        {
+            dllName = "Borz.Windows";
+        }
+        else
+        {
+            throw new Exception("Platform not supported");
+        }
+
+        var dllFilename = $"{dllName}.dll";
+        //Get the executables path
+        var path = Path.GetDirectoryName(Environment.ProcessPath);
+        if (path == null)
+            throw new Exception("Could not get path to executable.");
+
+        var fullDllPath = Path.Combine(path, dllFilename);
+
+        if (!File.Exists(fullDllPath))
+            throw new Exception("Platform assembly not found.");
+
+        var platAssembly = Assembly.LoadFrom(fullDllPath);
+        ShortTypeRegistry.Register(platAssembly);
+
+        //Now get embedded resource called platform.ako and load it into the config
+        var resourceName = $"{dllName}.platform.ako";
+        using (Stream stream = platAssembly.GetManifestResourceStream(resourceName))
+        using (StreamReader reader = new StreamReader(stream))
+        {
+            string result = reader.ReadToEnd();
+            Deserializer.FromString(Config.GetLayer(ConfLevel.Platform), result);
+        }
+    }
+
     public static void Shutdown()
     {
         MugiLog.Shutdown();
     }
-
-
-    public static ConfigLayers Config = new();
-
-    public static ParallelOptions ParallelOptions = new();
 
     public static bool UseMold
     {
@@ -65,7 +112,7 @@ public static class Borz
         using (StreamReader reader = new StreamReader(stream))
         {
             string result = reader.ReadToEnd();
-            Deserializer.FromString(Config.GetLayer(ConfigLayers.LayerType.Defaults), result);
+            Deserializer.FromString(Config.GetLayer(ConfLevel.Defaults), result);
         }
     }
 
@@ -104,9 +151,9 @@ public static class Borz
             MugiLog.Warning($"Max threads requested is greater than the number of CPUs, capping at {maxCpuCount}.");
         }
 
-        var memoryInfo = IPlatform.Instance;
-        var totalMemory = memoryInfo.GetTotalMemory();
-        var availableMemory = memoryInfo.GetAvailableMemory();
+        var memoryInfo = IPlatform.Instance.GetMemoryInfo();
+        var totalMemory = memoryInfo.Total;
+        var availableMemory = memoryInfo.Available;
 
         var totalMemoryGB = totalMemory.GigaBytes;
         var availableMemoryGB = availableMemory.GigaBytes;

@@ -22,7 +22,7 @@ public static class Workspace
 
         var projectConfig = Path.Combine(Location, "borzsettings.ako");
         if (File.Exists(projectConfig))
-            Deserializer.FromString(Borz.Config.GetLayer(ConfigLayers.LayerType.Workspace),
+            Deserializer.FromString(Borz.Config.GetLayer(ConfLevel.Workspace),
                 File.ReadAllText(projectConfig));
 
         var userProjectConfig = Path.Combine(Workspace.Location, ".borz", "usersettings.ako");

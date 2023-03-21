@@ -1,0 +1,5 @@
+<Project>
+    <ItemGroup>
+        <ProjectReference Include="$(SolutionDir)/Borz.Core/Borz.Core.csproj"/>
+    </ItemGroup>
+</Project>

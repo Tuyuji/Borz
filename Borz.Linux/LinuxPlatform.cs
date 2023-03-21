@@ -1,27 +1,14 @@
 using System.Text.RegularExpressions;
+using AkoSharp;
+using Borz.Core;
+using Borz.Core.Platform;
 using ByteSizeLib;
 
-namespace Borz.Core.Platform;
+namespace Borz.Linux;
 
+[ShortType("PlatLinux")]
 public class LinuxPlatform : IPlatform
 {
-    private static Dictionary<string, ByteSize>? _memoryInfo;
-
-    public ByteSize GetTotalMemory()
-    {
-        return GetMemoryInfo()["MemTotal"];
-    }
-
-    public ByteSize GetFreeMemory()
-    {
-        return GetMemoryInfo()["MemFree"];
-    }
-
-    public ByteSize GetAvailableMemory()
-    {
-        return GetMemoryInfo()["MemAvailable"];
-    }
-
     public string GetUserConfigPath()
     {
         var xdgConfigHome = Environment.GetEnvironmentVariable("XDG_CONFIG_HOME")
@@ -31,23 +18,25 @@ public class LinuxPlatform : IPlatform
         return xdgConfigHome;
     }
 
-    private static Dictionary<string, ByteSize> GetMemoryInfo()
+    public MemoryInfo GetMemoryInfo()
     {
-        if (_memoryInfo != null)
-            return _memoryInfo;
-
         //Do the same thing as above, but using Regex
         var info = File.ReadAllText("/proc/meminfo");
-        var dict = new Dictionary<string, ByteSize>();
+        ByteSize? total = null, available = null;
+
         foreach (Match match in Regex.Matches(info, @"(?<key>\w+):\s+(?<value>\d+\s+\w+)"))
         {
             var key = match.Groups["key"].Value;
             var value = match.Groups["value"].Value;
-            if (ByteSize.TryParse(value, out var size))
-                dict.Add(key, size);
+            if (key == "MemTotal")
+                total = ByteSize.Parse(value);
+            else if (key == "MemAvailable")
+                available = ByteSize.Parse(value);
         }
 
-        _memoryInfo = dict;
-        return dict;
+        if (total == null || available == null)
+            throw new Exception("Could not get memory info");
+
+        return new MemoryInfo((ByteSize)total, (ByteSize)available);
     }
 }
