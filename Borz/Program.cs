@@ -1,6 +1,4 @@
-﻿using System.Diagnostics;
-using Antlr4.Runtime;
-using Borz.Cli;
+﻿using Borz.Cli;
 using Spectre.Console.Cli;
 
 namespace Borz;
@@ -9,9 +7,7 @@ static class Program
 {
     public static int Main(string[] args)
     {
-        MugiLog.Init();
-        
-        Utils.Init();
+        Core.Borz.Init();
         var app = new CommandApp();
         app.Configure(config =>
         {
@@ -20,14 +16,11 @@ static class Program
                 .WithAlias("c");
             config.AddCommand<GenerateCommand>("generate")
                 .WithAlias("g");
-            config.AddBranch<ConfigSettings>("config", conf =>
-            {
-                conf.AddCommand<ListConfigCommand>("list");
-            });
+            config.AddBranch<ConfigSettings>("config", conf => { conf.AddCommand<ListConfigCommand>("list"); });
         });
         var res = app.Run(args);
-        MugiLog.Shutdown();
+        Core.Borz.Shutdown();
+
         return res;
     }
-    
 }

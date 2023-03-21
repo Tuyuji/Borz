@@ -8,16 +8,11 @@
     </PropertyGroup>
 
     <ItemGroup>
-      <PackageReference Include="AkoSharp" Version="2.0.0" />
-      <PackageReference Include="ByteSize" Version="2.1.1" />
-      <PackageReference Include="Microsoft.Extensions.FileSystemGlobbing" Version="7.0.0-preview.1.22076.8" />
-      <PackageReference Include="MoonSharp" Version="2.0.0" />
       <PackageReference Include="Spectre.Console" Version="0.43.0" />
     </ItemGroup>
 
     <ItemGroup>
-      <None Remove="defaults.ako" />
-      <EmbeddedResource Include="defaults.ako" />
+      <ProjectReference Include="..\Borz.Core\Borz.Core.csproj"/>
     </ItemGroup>
 
 </Project>

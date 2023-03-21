@@ -1,9 +1,5 @@
 using System.ComponentModel;
-using System.Data;
 using System.Diagnostics.CodeAnalysis;
-using System.Runtime.InteropServices;
-using Borz.Compilers;
-using Borz.Generators;
 using Spectre.Console.Cli;
 
 namespace Borz.Cli;
@@ -26,11 +22,7 @@ public class GenerateCommand : Command<GenerateCommand.Settings>
     public override int Execute([NotNull] CommandContext context, [NotNull] Settings settings)
     {
         //This runs the build.borz command in the current directory.
-        Workspace.Init();
-        IGenerator generator = new CMakeGenerator();
-
-        generator.Generate();
-
+        Core.Borz.GenerateWorkspace(Directory.GetCurrentDirectory());
         return 0;
     }
 }
