@@ -26,10 +26,7 @@ public class CppBuilder : IBuilder
         var compiler = CreateCompiler();
         var linker = CreateLinker();
 
-        if (!ValidateCompiler(compiler))
-            return false;
-
-        if (!ValidateLinker(linker))
+        if (!ValidateCompiler(compiler) || !ValidateLinker(linker))
             return false;
 
         compiler.GenerateSourceDependencies = true;
@@ -211,8 +208,7 @@ public class CppBuilder : IBuilder
 
     private bool ValidateCompiler(ICCompiler compiler)
     {
-        string reason = String.Empty;
-        if (!compiler.IsSupported(out reason))
+        if (!compiler.IsSupported(out var reason))
         {
             MugiLog.Fatal("Compiler not supported: " + reason);
             return false;
@@ -223,8 +219,7 @@ public class CppBuilder : IBuilder
 
     private bool ValidateLinker(ICCompiler linker)
     {
-        string reason = String.Empty;
-        if (!linker.IsSupported(out reason))
+        if (!linker.IsSupported(out var reason))
         {
             MugiLog.Fatal("Linker not supported: " + reason);
             return false;
