@@ -53,11 +53,9 @@ public static class Workspace
                 }
                 else
                 {
-                    MugiLog.Fatal($"Error: " + runtimeError.Message);
+                    MugiLog.Fatal(runtimeError.Message);
                 }
             }
-            else
-                MugiLog.Fatal($"Error: " + exception);
 
             Environment.Exit(1);
         }
