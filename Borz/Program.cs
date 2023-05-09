@@ -18,7 +18,16 @@ static class Program
                 .WithAlias("g");
             config.AddBranch<ConfigSettings>("config", conf => { conf.AddCommand<ListConfigCommand>("list"); });
         });
-        var res = app.Run(args);
+        int res = 1;
+        try
+        {
+            res = app.Run(args);
+        }
+        catch (Exception e)
+        {
+            //Ignore
+        }
+
         Core.Borz.Shutdown();
 
         return res;
