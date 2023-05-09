@@ -88,6 +88,9 @@ public abstract class Project
 
     public void AddDep(Project project)
     {
+        if (project == null)
+            throw new Exception("Cannot add null project as dependency");
+
         if (Dependencies.Contains(project))
             return;
 
