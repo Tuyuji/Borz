@@ -10,6 +10,7 @@ public class CppProject : CProject
     public CppProject(string name, BinType type, string directory = "", Language language = Language.Cpp) : base(name,
         type, directory, language)
     {
+        StdVersion = "c++17";
     }
 
     public static CppProject Create(Script script, string name, BinType type)
