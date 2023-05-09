@@ -12,8 +12,10 @@ static class Program
         app.Configure(config =>
         {
             config.Settings.ApplicationName = "Borz";
+            config.AddCommand<InitCommand>("init");
             config.AddCommand<CompileCommand>("compile")
                 .WithAlias("c");
+            config.AddCommand<CleanCommand>("clean");
             config.AddCommand<GenerateCommand>("generate")
                 .WithAlias("g");
             config.AddBranch<ConfigSettings>("config", conf => { conf.AddCommand<ListConfigCommand>("list"); });

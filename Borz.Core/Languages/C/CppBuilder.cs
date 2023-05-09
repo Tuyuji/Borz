@@ -240,7 +240,6 @@ public class CppBuilder : IBuilder
     private List<string> CompileSourceFiles(CProject project, ICCompiler compiler, List<string> sourceFilesToCompile)
     {
         List<string> objects = new List<string>();
-        int currentFile = 1;
         int totalFiles = sourceFilesToCompile.Count;
         var objForBuild = Parallel.For(0, sourceFilesToCompile.Count, Borz.ParallelOptions, i =>
         {
@@ -248,11 +247,10 @@ public class CppBuilder : IBuilder
             //Dont care for headers.
             if (sourceFile.EndsWith(".h"))
             {
-                Interlocked.Increment(ref currentFile);
                 return;
             }
 
-            MugiLog.Info($"[{i}/{totalFiles}] Compiling {sourceFile}");
+            MugiLog.Info($"[{i + 1}/{totalFiles}] Compiling {sourceFile}");
 
             var objFileName = Path.GetFileNameWithoutExtension(sourceFile) + ".o";
 

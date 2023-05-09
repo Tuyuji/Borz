@@ -1,0 +1,3 @@
+$NAME = project("$NAME", Language.$LANG, BinType.$BINTYPE)
+$NAME.AddSourceGlob("Source/**.$SRCEXT")
+$NAME.AddIncludePath("Include", true)
