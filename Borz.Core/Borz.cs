@@ -178,6 +178,8 @@ public static class Borz
 
     public static bool CompileWorkspace(string workspacePath, bool justLog = false)
     {
+        var oldDir = Directory.GetCurrentDirectory();
+
         //Set the current directory to the workspace path
         Directory.SetCurrentDirectory(workspacePath);
 
@@ -203,6 +205,7 @@ public static class Borz
         }
         catch (NonAcyclicGraphException e)
         {
+            Directory.SetCurrentDirectory(oldDir);
             MugiLog.Fatal("Cyclic/Circular dependency detected, cannot continue.");
             return false;
         }
@@ -215,6 +218,28 @@ public static class Borz
             var builder = IBuilder.GetBuilder(prj);
             builder.Build(prj, justLog);
         });
+        Directory.SetCurrentDirectory(oldDir);
+        return true;
+    }
+
+    public static bool CleanWorkspace(string workspacePath)
+    {
+        var oldDir = Directory.GetCurrentDirectory();
+        Directory.SetCurrentDirectory(workspacePath);
+
+        Workspace.Init();
+
+        Workspace.Projects.ForEach(prj =>
+        {
+            var intDir = prj.GetPathAbs(prj.IntermediateDirectory);
+            var outDir = prj.GetPathAbs(prj.OutputDirectory);
+            if (Directory.Exists(intDir))
+                Directory.Delete(intDir, true);
+            if (Directory.Exists(outDir))
+                Directory.Delete(outDir, true);
+        });
+
+        Directory.SetCurrentDirectory(oldDir);
         return true;
     }
 
