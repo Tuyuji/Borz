@@ -17,7 +17,12 @@ public class CProject : Project
     public List<string> Links = new();
     public Dictionary<PkgDep, bool> PkgDeps = new();
     public bool UsePIC = false;
+
     public string StdVersion = "";
+
+    //This is used to determine if the project was built or not.
+    //If this is set to true, then the output binrary was created or updated.
+    public bool IsBuilt = false;
 
     public CProject(string name, BinType type, string directory = "", Language language = Language.C) : base(name, type,
         language, directory)

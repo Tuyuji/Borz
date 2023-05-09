@@ -2,6 +2,7 @@ using Borz.Core.Languages.C;
 
 namespace Borz.Core.Generators;
 
+[FriendlyName("CMake")]
 public class CMakeGenerator : IGenerator
 {
     private static string StrListToCMake(List<string> list)

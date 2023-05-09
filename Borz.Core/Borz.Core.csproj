@@ -11,11 +11,12 @@
         <PackageReference Include="ByteSize" Version="2.1.1"/>
         <PackageReference Include="Microsoft.Extensions.FileSystemGlobbing" Version="7.0.0-preview.1.22076.8"/>
         <PackageReference Include="MoonSharp" Version="2.0.0"/>
+        <PackageReference Include="Newtonsoft.Json" Version="13.0.3"/>
+        <PackageReference Include="QuickGraph" Version="3.6.61119.7"/>
     </ItemGroup>
 
     <ItemGroup>
         <None Remove="defaults.ako"/>
         <EmbeddedResource Include="defaults.ako"/>
     </ItemGroup>
-
 </Project>

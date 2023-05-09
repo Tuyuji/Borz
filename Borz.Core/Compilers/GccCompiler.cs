@@ -13,6 +13,11 @@ public class GccCompiler : ICCompiler
     {
     }
 
+    public bool GenerateSourceDependencies { get; set; }
+    public bool GenerateCompileCommands { get; set; }
+
+    public List<CppBuilder.CompileCommand> CompileCommands { get; } = new();
+
     public UnixUtil.RunOutput CompileObject(Project project, string sourceFile, string outputFile)
     {
         if (project is CppProject cppProject)
@@ -27,6 +32,12 @@ public class GccCompiler : ICCompiler
     private UnixUtil.RunOutput CompileObjectCpp(CProject project, string sourceFile, string outputFile)
     {
         List<string> cmdArgs = new();
+
+        if (project.StdVersion != String.Empty)
+            cmdArgs.Add($"-std=" + project.StdVersion);
+
+        if (GenerateSourceDependencies)
+            cmdArgs.Add("-MMD");
 
         foreach (var (key, value) in project.GetDefines())
             cmdArgs.Add(value == null ? $"-D{key}" : $"-D{key}={value}");
@@ -48,6 +59,19 @@ public class GccCompiler : ICCompiler
         bool useCpp = project.Language == Language.Cpp;
 
         string compiler = sourceFile.EndsWith(".cpp") ? "g++" : "gcc";
+
+        if (GenerateCompileCommands)
+        {
+            CompileCommands.Add(
+                new CppBuilder.CompileCommand()
+                {
+                    Directory = project.ProjectDirectory,
+                    Arguments = cmdArgs.ToArray(),
+                    Command = compiler,
+                    File = sourceFile,
+                    Output = outputFile
+                });
+        }
 
         var res = Utils.RunCmd(compiler,
             Strings.Join(cmdArgs.ToArray())!, project.ProjectDirectory, JustLog);
@@ -127,6 +151,24 @@ public class GccCompiler : ICCompiler
         return res;
     }
 
+    public bool GetDependencies(Project project, string objectFile, out string[] dependencies)
+    {
+        //find dependency file for source file
+        //this will be the source files name with .d appended located in the projects intermediate directory
+        var depFile = Path.Combine(project.IntermediateDirectory, Path.GetFileNameWithoutExtension(objectFile) + ".d");
+
+        dependencies = Array.Empty<string>();
+
+        if (!File.Exists(depFile))
+            return false;
+
+        var dep = PosixDepParser.Parse(File.ReadAllText(depFile));
+        var objFileAbs = Path.Combine(project.IntermediateDirectory, objectFile);
+        if (!dep.ContainsKey(objFileAbs)) return false;
+        dependencies = dep[objFileAbs].ToArray();
+        return true;
+    }
+
     public bool IsSupported(out string reason)
     {
         //Make sure gcc is installed
@@ -161,8 +203,23 @@ public class GccCompiler : ICCompiler
         return false;
     }
 
+    public string GetFriendlyName(bool asLinker)
+    {
+        if (Borz.UseMold && asLinker)
+        {
+            return GetFriendlyName() + " w/ Mold";
+        }
+
+        return GetFriendlyName();
+    }
+
     public void SetJustLog(bool justLog)
     {
         JustLog = justLog;
+    }
+
+    public string GetFriendlyName()
+    {
+        return "GCC";
     }
 }

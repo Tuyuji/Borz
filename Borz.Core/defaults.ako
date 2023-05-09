@@ -24,3 +24,6 @@ mt.enable+
 mt.minThreadMem "150MB"
 # 0 or -1 for auto.
 mt.maxThreads   -1
+
+#Builder settings
+builder.cpp.compileCmds-

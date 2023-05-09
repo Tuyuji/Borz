@@ -1,9 +1,10 @@
 using System.Reflection;
 using System.Runtime.InteropServices;
 using AkoSharp;
-using Borz.Core.Generators;
 using Borz.Core.Platform;
 using ByteSizeLib;
+using QuickGraph;
+using QuickGraph.Algorithms.TopologicalSort;
 
 namespace Borz.Core;
 
@@ -175,7 +176,7 @@ public static class Borz
         ParallelOptions.MaxDegreeOfParallelism = usableThreadCount;
     }
 
-    public static void CompileWorkspace(string workspacePath, bool justLog = false)
+    public static bool CompileWorkspace(string workspacePath, bool justLog = false)
     {
         //Set the current directory to the workspace path
         Directory.SetCurrentDirectory(workspacePath);
@@ -184,20 +185,44 @@ public static class Borz
         Workspace.Init();
 
         Core.Borz.UpdateMemInfo();
-        Workspace.Projects.ForEach(prj =>
+
+        var graph = new AdjacencyGraph<Project, Edge<Project>>();
+        graph.AddVertexRange(Workspace.Projects);
+        foreach (var project in Workspace.Projects)
+        {
+            foreach (var dependency in project.Dependencies)
+            {
+                graph.AddEdge(new Edge<Project>(dependency, project));
+            }
+        }
+
+        var algorithm = new TopologicalSortAlgorithm<Project, Edge<Project>>(graph);
+        try
+        {
+            algorithm.Compute();
+        }
+        catch (NonAcyclicGraphException e)
+        {
+            MugiLog.Fatal("Cyclic/Circular dependency detected, cannot continue.");
+            return false;
+        }
+
+        var sortedProjects = algorithm.SortedVertices.ToList();
+
+        sortedProjects.ForEach(prj =>
         {
             MugiLog.Info("===========================================");
             var builder = IBuilder.GetBuilder(prj);
             builder.Build(prj, justLog);
         });
+        return true;
     }
 
-    public static void GenerateWorkspace(string workspacePath)
+    public static void GenerateWorkspace(string workspacePath, IGenerator generator)
     {
         Directory.SetCurrentDirectory(workspacePath);
         Workspace.Init();
 
-        IGenerator generator = new CMakeGenerator();
         generator.Generate();
     }
 }
