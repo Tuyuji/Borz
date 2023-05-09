@@ -18,7 +18,9 @@ public class CompileCommand : Command<CompileCommand.Settings>
 
     public override int Execute([NotNull] CommandContext context, [NotNull] Settings settings)
     {
-        Core.Borz.CompileWorkspace(Directory.GetCurrentDirectory(), settings.JustLog);
-        return 0;
+        return
+            Core.Borz.CompileWorkspace(Directory.GetCurrentDirectory(), settings.JustLog)
+                ? 0
+                : 1;
     }
 }
