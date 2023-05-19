@@ -35,8 +35,8 @@ public class CppBuilder : IBuilder
         compiler.SetJustLog(justLog);
         linker.SetJustLog(justLog);
 
-        MugiLog.Info($"Using compiler: {compiler.GetFriendlyName()}");
-        MugiLog.Info($"Using linker: {linker.GetFriendlyName(true)}");
+        MugiLog.Debug($"Using compiler: {compiler.GetFriendlyName()}");
+        MugiLog.Debug($"Using linker: {linker.GetFriendlyName(true)}");
 
         string outputDir = project.OutputDirectory;
         string intDir = project.IntermediateDirectory;
@@ -107,7 +107,7 @@ public class CppBuilder : IBuilder
         if (sourceFilesToCompile.Count == 0 && !pchCompiled)
         {
             Borz.BuildLog.Enqueue("Was gonna compile, but no files to compile for project: " + project.Name);
-            MugiLog.Info("No files to compile.");
+            MugiLog.Debug("No files to compile.");
         }
         else
         {
@@ -131,7 +131,7 @@ public class CppBuilder : IBuilder
         if (needToRelink || sourceFilesToCompile.Count != 0)
         {
             Borz.BuildLog.Enqueue($"Linking project: {project.Name}");
-            MugiLog.Info("Linking project: " + project.Name);
+            MugiLog.Debug("Linking project: " + project.Name);
             stopwatch.Restart();
             LinkProject(project, linker, objects);
             stopwatch.Stop();
