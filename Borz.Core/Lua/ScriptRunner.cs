@@ -28,9 +28,12 @@ public static class ScriptRunner
 
         script.Globals.RegisterModuleType<BorzModule>();
         script.Globals["Project"] = typeof(Project);
-        script.Globals["Util"] = typeof(Util);
-        script.Globals["Log"] = typeof(Log);
-        script.Globals["PkgConfig"] = typeof(LuaPkgConf);
+        script.Globals["util"] = typeof(Util);
+        script.Globals["dir"] = typeof(LuaDir);
+        script.Globals["file"] = typeof(LuaFile);
+        script.Globals["path"] = typeof(LuaPath);
+        script.Globals["log"] = typeof(Log);
+        script.Globals["pkgconf"] = typeof(LuaPkgConf);
         script.Globals["BuildConf"] = Borz.BuildConfig;
         script.Globals["ws"] = Workspace.Settings;
 
@@ -62,5 +65,12 @@ public static class ScriptRunner
     public static string GetCwd(this Script script)
     {
         return script.Globals.Get("cwd").String;
+    }
+
+    public static string GetAbsolute(this Script script, string path)
+    {
+        if (!Path.IsPathRooted(path))
+            path = Path.Combine(script.GetCwd(), path);
+        return path;
     }
 }

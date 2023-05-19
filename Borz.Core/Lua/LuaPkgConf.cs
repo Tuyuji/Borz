@@ -72,7 +72,7 @@ public static class LuaPkgConf
         return new PkgDep(libs.ToArray(), libPaths.ToArray(), defines, includePaths.ToArray(), false);
     }
 
-    public static PkgDep? Query(string name, bool required = true, string versionIn = "")
+    public static PkgDep? query(string name, bool required = true, string versionIn = "")
     {
         var (versionOp, version) = ConvertVersionStringToPair(versionIn);
 
@@ -85,9 +85,9 @@ public static class LuaPkgConf
         return pkg == null ? null : ConvertPkgConfigInfoToPkgDep(pkg);
     }
 
-    public static IDictionary<string, PkgDep?> FromAko(Script script, string akoFile)
+    public static IDictionary<string, PkgDep?> fromAko(Script script, string akoFile)
     {
-        var akoLoc = Util.GetAbsolute(script, akoFile);
+        var akoLoc = script.GetAbsolute(akoFile);
         var ako = Deserializer.FromString(File.ReadAllText(akoLoc));
         if (ako.Type != AkoVar.VarType.TABLE)
             throw new Exception("Ako file must be a table");

@@ -12,9 +12,9 @@ public class Util
 
     //Sometimes things you download might have some screwy time stamps
     //so this will help you fix them.
-    public static void RecursiveFixModifyTimes(Script script, string directory)
+    public static void recursiveFixModifyTimes(Script script, string directory)
     {
-        string absPath = GetAbsolute(script, directory);
+        string absPath = script.GetAbsolute(directory);
         //Recursive all the way down
         string[] files = Directory.GetFiles(absPath, "*", SearchOption.AllDirectories);
         foreach (var file in files)
@@ -23,12 +23,12 @@ public class Util
         }
     }
 
-    public static void Sleep(uint ms)
+    public static void sleep(uint ms)
     {
         System.Threading.Thread.Sleep((int)ms);
     }
 
-    public static DynValue RunCmd(Script script, string cmd, string args)
+    public static DynValue runCmd(Script script, string cmd, string args)
     {
         var result = UnixUtil.RunCmd(cmd, args, script.GetCwd());
         var tuple = DynValue.NewTuple(DynValue.FromObject(script, result.Exitcode),
@@ -36,40 +36,19 @@ public class Util
         return tuple;
     }
 
-    public static string path_combine(params string[] paths)
-    {
-        return Path.Combine(paths);
-    }
-
-    public static string GetFileName(string path)
-    {
-        return Path.GetFileName(path);
-    }
-
-    public static string GetFileNameWithoutExtension(string path)
-    {
-        return Path.GetFileNameWithoutExtension(path);
-    }
-
-    public static string GetAbsolute(Script script, string path)
-    {
-        if (!Path.IsPathRooted(path))
-            path = Path.Combine(script.GetCwd(), path);
-        return path;
-    }
-
-    public static Platform GetPlatform()
+    public static Platform getPlatform()
     {
         if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
         {
             return Platform.Linux;
         }
 
-        else if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
+        if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
         {
             return Platform.MacOS;
         }
-        else if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+
+        if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
         {
             return Platform.Windows;
         }
@@ -93,7 +72,7 @@ public class Util
     /// <param name="fileToCheck">If the given file exists then skip. Path is relative</param>
     /// <param name="folderToExtract">Path in archive to copy from.</param>
     /// <returns>False if a failure happened, only failure.</returns>
-    public static bool GetResource(Script script, ResourceType resourceType, string url, string extractTo,
+    public static bool getResource(Script script, ResourceType resourceType, string url, string extractTo,
         string fileToCheck = "", string folderToExtract = "")
     {
         if (File.Exists(Path.Combine(script.GetCwd(), fileToCheck)))
@@ -224,59 +203,11 @@ public class Util
         }
     }
 
-    #region Directory Functions
-
-    public static bool Mkdir(Script script, string dir)
-    {
-        dir = GetAbsolute(script, dir);
-        return Directory.CreateDirectory(dir).Exists;
-    }
-
-    public static bool DirExists(Script script, string dir)
-    {
-        dir = GetAbsolute(script, dir);
-        return Directory.Exists(dir);
-    }
-
-    public static void RmDir(Script script, string dir)
-    {
-        dir = GetAbsolute(script, dir);
-        Directory.Delete(dir, true);
-    }
-
-    //List dirs only list top level directories
-    public static string[] ListDirs(Script script, string dir)
-    {
-        dir = GetAbsolute(script, dir);
-        return Directory.GetDirectories(dir);
-    }
-
-    public static string[] ListDirs(Script script)
-    {
-        return Directory.GetDirectories(script.GetCwd());
-    }
-
-    #endregion
-
-    #region File Functions
-
-    public static void RmFile(Script script, string file)
-    {
-        file = GetAbsolute(script, file);
-        File.Delete(file);
-    }
-
-    public static bool FileExists(Script script, string file)
-    {
-        file = GetAbsolute(script, file);
-        return File.Exists(file);
-    }
-
-    public static bool DownloadFile(Script script, string url, string outputLocation)
+    public static bool downloadFile(Script script, string url, string outputLocation)
     {
         try
         {
-            outputLocation = GetAbsolute(script, outputLocation);
+            outputLocation = script.GetAbsolute(outputLocation);
             using WebClient wc = new();
             wc.DownloadFile(url, outputLocation);
             return true;
@@ -286,6 +217,4 @@ public class Util
             return false;
         }
     }
-
-    #endregion
 }
