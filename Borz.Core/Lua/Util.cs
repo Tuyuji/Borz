@@ -10,6 +10,19 @@ public class Util
 {
     //private static Dictionary<Guid, ConsoleHandler.ConsoleStatHandle> _statHandles = new();
 
+    //Sometimes things you download might have some screwy time stamps
+    //so this will help you fix them.
+    public static void RecursiveFixModifyTimes(Script script, string directory)
+    {
+        string absPath = GetAbsolute(script, directory);
+        //Recursive all the way down
+        string[] files = Directory.GetFiles(absPath, "*", SearchOption.AllDirectories);
+        foreach (var file in files)
+        {
+            File.SetLastWriteTimeUtc(file, DateTime.UtcNow);
+        }
+    }
+
     public static void Sleep(uint ms)
     {
         System.Threading.Thread.Sleep((int)ms);
