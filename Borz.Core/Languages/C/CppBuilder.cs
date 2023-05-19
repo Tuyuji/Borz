@@ -49,8 +49,6 @@ public class CppBuilder : IBuilder
         Stopwatch stopwatch = new Stopwatch();
         MugiLog.Info("Compiling project: " + project.Name);
 
-        List<string> sourceFilesToCompile = GetSourceFilesToCompile(project, compiler, ref objects);
-
         long? compileTime = null;
 
         bool pchCompiled = false;
@@ -89,15 +87,24 @@ public class CppBuilder : IBuilder
                 if (res.Exitcode != 0)
                 {
                     MugiLog.Error($"Failed to compile pch for project: {project.Name}");
-                    MugiLog.Error($"Compiler output: {res.Ouput}");
+                    MugiLog.Error($"Compiler output:\n{res.Error}");
                     return false;
+                }
+
+                if (!string.IsNullOrWhiteSpace(res.Error))
+                {
+                    //Mostly warnings 
+                    MugiLog.Warning($"Compiler output:\n{res.Error}");
                 }
 
                 pchCompiled = true;
             }
         }
 
-        if (sourceFilesToCompile.Count == 0)
+        //Due to source files compiling with this, were gonna need to recompile everything
+        List<string> sourceFilesToCompile = GetSourceFilesToCompile(project, compiler, ref objects, !pchCompiled);
+
+        if (sourceFilesToCompile.Count == 0 && !pchCompiled)
         {
             Borz.BuildLog.Enqueue("Was gonna compile, but no files to compile for project: " + project.Name);
             MugiLog.Info("No files to compile.");
@@ -144,7 +151,8 @@ public class CppBuilder : IBuilder
         return true;
     }
 
-    private List<string> GetSourceFilesToCompile(CProject project, ICCompiler compiler, ref List<string> objects)
+    private List<string> GetSourceFilesToCompile(CProject project, ICCompiler compiler, ref List<string> objects,
+        bool checkDeps = true)
     {
         List<string> sourceFilesToCompile = new List<string>();
 
@@ -152,6 +160,12 @@ public class CppBuilder : IBuilder
         {
             var objFileName = Path.GetFileNameWithoutExtension(sourceFile) + ".o";
             var objFileAbs = Path.Combine(project.IntermediateDirectory, objFileName);
+            if (!checkDeps)
+            {
+                sourceFilesToCompile.Add(sourceFile);
+                continue;
+            }
+
             if (!File.Exists(objFileAbs))
             {
                 //No object for source, compile it.
