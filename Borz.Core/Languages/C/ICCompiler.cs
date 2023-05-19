@@ -27,4 +27,6 @@ public interface ICCompiler : ICompiler
     bool IsSupported(out string reason);
 
     string GetFriendlyName(bool asLinker = false);
+    string GetCompiledPchLocation(CProject project);
+    UnixUtil.RunOutput CompilePch(CProject project);
 }

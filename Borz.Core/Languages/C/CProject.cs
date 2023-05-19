@@ -18,6 +18,8 @@ public class CProject : Project
     public Dictionary<PkgDep, bool> PkgDeps = new();
     public bool UsePIC = false;
     public bool Symbols = false;
+    public string PchSource = "";
+    public string PchHeader = "";
 
     //Version number for the C or Cpp standard to use.
     public string StdVersion;

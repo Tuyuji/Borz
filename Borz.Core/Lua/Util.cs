@@ -112,6 +112,7 @@ public class Util
             //Doesnt exist, download the resource
             try
             {
+                MugiLog.Info("Downloading " + filename);
                 using WebClient wc = new();
                 wc.DownloadFile(url, outputLocation);
             }

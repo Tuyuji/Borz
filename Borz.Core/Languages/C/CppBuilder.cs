@@ -53,12 +53,58 @@ public class CppBuilder : IBuilder
 
         long? compileTime = null;
 
+        bool pchCompiled = false;
+
+        if (!string.IsNullOrWhiteSpace(project.PchHeader))
+        {
+            //deal with pch
+            //some compiler agnostic way to handle pch
+            var pchObj = compiler.GetCompiledPchLocation(project);
+            bool shouldCompilePch = false;
+            if (File.Exists(pchObj))
+            {
+                if (File.GetLastWriteTimeUtc(pchObj) < File.GetLastWriteTimeUtc(project.GetPathAbs(project.PchHeader)))
+                {
+                    MugiLog.Debug($"Pch file is out of date for project(file itself out of date): {project.Name}");
+                    shouldCompilePch = true;
+                }
+                else if (compiler.GetDependencies(project, pchObj, out var pchObjDeps))
+                {
+                    if (project.GetPathsAbs(pchObjDeps)
+                        .Any(dep => File.GetLastWriteTimeUtc(pchObj) < File.GetLastWriteTimeUtc(dep)))
+                    {
+                        MugiLog.Debug($"Pch file is out of date for project(dep out of date): {project.Name}");
+                        shouldCompilePch = true;
+                    }
+                }
+            }
+            else
+            {
+                shouldCompilePch = true;
+            }
+
+            if (shouldCompilePch)
+            {
+                var res = compiler.CompilePch(project);
+                if (res.Exitcode != 0)
+                {
+                    MugiLog.Error($"Failed to compile pch for project: {project.Name}");
+                    MugiLog.Error($"Compiler output: {res.Ouput}");
+                    return false;
+                }
+
+                pchCompiled = true;
+            }
+        }
+
         if (sourceFilesToCompile.Count == 0)
         {
+            Borz.BuildLog.Enqueue("Was gonna compile, but no files to compile for project: " + project.Name);
             MugiLog.Info("No files to compile.");
         }
         else
         {
+            Borz.BuildLog.Enqueue($"Compiling source files for project: {project.Name}");
             uint totalFiles = (uint)project.SourceFiles.Count;
             uint currentFile = 1;
             stopwatch.Restart();
@@ -73,10 +119,11 @@ public class CppBuilder : IBuilder
                 WriteCompileCommands(project.ProjectDirectory, compiler.CompileCommands.ToArray());
         }
 
-        bool needToRelink = NeedRelink(project);
+        bool needToRelink = NeedRelink(project) || pchCompiled;
 
         if (needToRelink || sourceFilesToCompile.Count != 0)
         {
+            Borz.BuildLog.Enqueue($"Linking project: {project.Name}");
             MugiLog.Info("Linking project: " + project.Name);
             stopwatch.Restart();
             LinkProject(project, linker, objects);

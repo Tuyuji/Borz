@@ -34,26 +34,24 @@ public class GccCompiler : ICCompiler
     {
         List<string> cmdArgs = new();
 
-        if (project.Symbols)
-            cmdArgs.Add("-g");
+        var compiledPch = GetCompiledPchLocation(project);
+        if (!string.IsNullOrWhiteSpace(project.PchHeader) && !string.IsNullOrWhiteSpace(compiledPch))
+        {
+            cmdArgs.Add("-include");
+            //remove the .gch extension
+            cmdArgs.Add(compiledPch[..^4]);
+        }
 
-        if (project.StdVersion != String.Empty)
-            cmdArgs.Add($"-std=" + (project is CppProject ? "c++" : "c") + project.StdVersion);
+        AddSymbols(project, ref cmdArgs);
+        AddStdVersion(project, ref cmdArgs);
 
         if (GenerateSourceDependencies)
             cmdArgs.Add("-MMD");
 
-        foreach (var (key, value) in project.GetDefines())
-            cmdArgs.Add(value == null ? $"-D{key}" : $"-D{key}={value}");
-
-        var depIncludes = project.GetIncludePaths();
-        cmdArgs.AddRange(depIncludes.Select(includePath => $"-I{includePath}"));
-
-        if (project.UsePIC)
-            cmdArgs.Add("-fPIC");
-
-        foreach (var link in project.GetLibraries())
-            cmdArgs.Add($"-l{link}");
+        AddDefines(project, ref cmdArgs);
+        AddIncludes(project, ref cmdArgs);
+        AddPic(project, ref cmdArgs);
+        AddLibraries(project, ref cmdArgs);
 
         cmdArgs.Add("-o");
         cmdArgs.Add(outputFile);
@@ -129,11 +127,8 @@ public class GccCompiler : ICCompiler
         foreach (var rpath in project.GetRPaths(unknownProject.GetPathAbs(unknownProject.OutputDirectory)))
             cmdArgs.Add($"-Wl,-rpath=$ORIGIN/{rpath}");
 
-        foreach (var libraryPath in project.GetLibraryPaths())
-            cmdArgs.Add($"-L{libraryPath}");
-
-        foreach (var link in project.GetLibraries())
-            cmdArgs.Add($"-l{link}");
+        AddLibraryPaths(project, ref cmdArgs);
+        AddLibraries(project, ref cmdArgs);
 
         switch (project.Type)
         {
@@ -174,8 +169,17 @@ public class GccCompiler : ICCompiler
         return true;
     }
 
+    public static bool supported = false;
+
     public bool IsSupported(out string reason)
     {
+        if (supported)
+        {
+            //already checked, return cached result
+            reason = "";
+            return true;
+        }
+
         //Make sure gcc is installed
         var res = Utils.RunCmd("gcc", "--version");
         if (res.Exitcode != 0)
@@ -201,6 +205,7 @@ public class GccCompiler : ICCompiler
         if (major >= 10)
         {
             reason = "";
+            supported = true;
             return true;
         }
 
@@ -218,6 +223,42 @@ public class GccCompiler : ICCompiler
         return GetFriendlyName();
     }
 
+    public string GetCompiledPchLocation(CProject project)
+    {
+        //should be ProjectIntDir/pch.h.gch
+        var fileName = Path.GetFileName(project.PchHeader);
+        return Path.Combine(project.IntermediateDirectory, fileName + ".gch");
+    }
+
+    public UnixUtil.RunOutput CompilePch(CProject project)
+    {
+        var pchHeader = project.GetPathAbs(project.PchHeader);
+        var pchObj = GetCompiledPchLocation(project);
+
+        //due to how gcc works we need to make a dummy file with the pch headers name in the intermediate directory
+
+        var dummyFile = Path.Combine(project.IntermediateDirectory, Path.GetFileName(pchHeader));
+        File.WriteAllText(dummyFile, "");
+
+        var cmdArgs = new List<string>();
+        cmdArgs.Add("-x");
+        cmdArgs.Add(project is CppProject ? "c++-header" : "c-header");
+        cmdArgs.Add("-MMD");
+        //add defines
+        AddDefines(project, ref cmdArgs);
+        AddIncludes(project, ref cmdArgs);
+        AddPic(project, ref cmdArgs);
+        AddSymbols(project, ref cmdArgs);
+        AddStdVersion(project, ref cmdArgs);
+        cmdArgs.Add("-o");
+        cmdArgs.Add(pchObj);
+        cmdArgs.Add("-c");
+        cmdArgs.Add(pchHeader);
+        var res = Utils.RunCmd(project.Language == Language.C ? "gcc" : "g++",
+            Strings.Join(cmdArgs.ToArray())!, project.ProjectDirectory, JustLog);
+        return res;
+    }
+
     public void SetJustLog(bool justLog)
     {
         JustLog = justLog;
@@ -226,5 +267,57 @@ public class GccCompiler : ICCompiler
     public string GetFriendlyName()
     {
         return "GCC";
+    }
+
+    public void AddSymbols(CProject project, ref List<string> args)
+    {
+        if (project.Symbols)
+            args.Add("-g");
+    }
+
+    public void AddStdVersion(CProject project, ref List<string> args)
+    {
+        if (project.StdVersion != String.Empty)
+            args.Add($"-std=" + (project is CppProject ? "c++" : "c") + project.StdVersion);
+    }
+
+    public void AddPic(CProject project, ref List<string> args)
+    {
+        if (project.UsePIC)
+        {
+            args.Add("-fPIC");
+        }
+    }
+
+    public void AddDefines(CProject project, ref List<string> args)
+    {
+        foreach (var define in project.GetDefines())
+        {
+            args.Add(define.Value == null ? $"-D{define.Key}" : $"-D{define.Key}={define.Value}");
+        }
+    }
+
+    public void AddIncludes(CProject project, ref List<string> args)
+    {
+        foreach (var include in project.GetIncludePaths())
+        {
+            args.Add($"-I{include}");
+        }
+    }
+
+    public void AddLibraryPaths(CProject project, ref List<string> args)
+    {
+        foreach (var libraryPath in project.GetLibraryPaths())
+        {
+            args.Add($"-L{libraryPath}");
+        }
+    }
+
+    public void AddLibraries(CProject project, ref List<string> args)
+    {
+        foreach (var library in project.GetLibraries())
+        {
+            args.Add($"-l{library}");
+        }
     }
 }
