@@ -1,3 +1,5 @@
+using System.Collections.Concurrent;
+using System.Diagnostics;
 using System.Reflection;
 using System.Runtime.InteropServices;
 using AkoSharp;
@@ -16,8 +18,21 @@ public static class Borz
 
     public static BuildConfig BuildConfig = new();
 
+    public static ConcurrentQueue<string> BuildLog = new();
+
     public static void Init()
     {
+        bool isDebug = false;
+        //see if a debugger is attached
+        //see if were a debug build
+#if DEBUG
+        isDebug = true;
+#endif
+        if (Debugger.IsAttached || isDebug)
+        {
+            MugiLog.MinLevel = LogLevel.Debug;
+        }
+
         MugiLog.Init();
 
         ShortTypeRegistry.AutoRegister();
@@ -93,6 +108,22 @@ public static class Borz
     public static void Shutdown()
     {
         MugiLog.Shutdown();
+        //write build log to /tmp/borz-build.log
+        //if a build log already exists, append to it
+        var buildLogPath = Path.Combine(Path.GetTempPath(), "borz-build.log");
+        if (File.Exists(buildLogPath))
+        {
+            BuildLog.Enqueue($"=======================");
+            BuildLog.Enqueue($"=======================");
+            BuildLog.Enqueue($"{DateTime.Now:g}");
+            BuildLog.Enqueue($"=======================");
+            BuildLog.Enqueue($"=======================");
+            File.AppendAllLines(buildLogPath, BuildLog);
+        }
+        else
+        {
+            File.WriteAllLines(buildLogPath, BuildLog);
+        }
     }
 
     public static bool UseMold
