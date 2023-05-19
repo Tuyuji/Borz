@@ -22,7 +22,8 @@ public class BorzModule
             fullPath = Path.Combine(fullPath, "build.borz");
         }
 
-        DynValue fn = s.LoadFile(fullPath);
+
+        DynValue fn = s.LoadFile(fullPath, null, Path.GetRelativePath(Workspace.Location, fullPath));
         s.SetCwd(Path.GetDirectoryName(fullPath)!);
 
         var data = new TailCallData()
@@ -33,7 +34,7 @@ public class BorzModule
                 c.GetScript().SetCwd(oldCwd);
                 return null;
             }),
-            Args = new DynValue[] { }
+            Args = new DynValue[] { },
         };
 
         Workspace.ExecutedBorzFiles.Add(fullPath);

@@ -45,16 +45,7 @@ public static class Workspace
         {
             if (exception is InterpreterException runtimeError)
             {
-                var callstack = runtimeError.CallStack[0];
-                if (callstack != null)
-                {
-                    var line = callstack.Location.FromLine;
-                    MugiLog.Fatal($"Line {line} Error: " + runtimeError.Message);
-                }
-                else
-                {
-                    MugiLog.Fatal(runtimeError.Message);
-                }
+                MugiLog.Fatal(runtimeError.DecoratedMessage);
             }
             else
                 MugiLog.Fatal(exception.Message);
