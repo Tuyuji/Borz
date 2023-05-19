@@ -14,12 +14,17 @@ public class CompileCommand : Command<CompileCommand.Settings>
         [CommandOption("-n|--just-log")]
         [DefaultValue(false)]
         public bool JustLog { get; init; }
+
+        [CommandArgument(0, "[config]")] public string? Config { get; init; }
     }
 
     public override int Execute([NotNull] CommandContext context, [NotNull] Settings settings)
     {
+        Core.Borz.BuildConfig.Config = settings.Config ?? "debug";
+        Core.Borz.RunScript(Directory.GetCurrentDirectory());
+
         return
-            Core.Borz.CompileWorkspace(Directory.GetCurrentDirectory(), settings.JustLog)
+            Core.Borz.CompileWorkspace(settings.JustLog)
                 ? 0
                 : 1;
     }

@@ -31,6 +31,8 @@ public static class ScriptRunner
         script.Globals["Util"] = typeof(Util);
         script.Globals["Log"] = typeof(Log);
         script.Globals["PkgConfig"] = typeof(LuaPkgConf);
+        script.Globals["BuildConf"] = Borz.BuildConfig;
+        script.Globals["ws"] = Workspace.Settings;
 
 
         var types = typeof(Project).Assembly.GetTypes();

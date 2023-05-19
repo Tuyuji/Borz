@@ -1,3 +1,4 @@
+using System.IO.Compression;
 using System.Net;
 using System.Runtime.InteropServices;
 using MoonSharp.Interpreter;
@@ -14,10 +15,27 @@ public class Util
         System.Threading.Thread.Sleep((int)ms);
     }
 
-    public static int RunCmd(Script script, string cmd, string args)
+    public static DynValue RunCmd(Script script, string cmd, string args)
     {
         var result = UnixUtil.RunCmd(cmd, args, script.GetCwd());
-        return result.Exitcode;
+        var tuple = DynValue.NewTuple(DynValue.FromObject(script, result.Exitcode),
+            DynValue.FromObject(script, result.Ouput), DynValue.FromObject(script, result.Error));
+        return tuple;
+    }
+
+    public static string path_combine(params string[] paths)
+    {
+        return Path.Combine(paths);
+    }
+
+    public static string GetFileName(string path)
+    {
+        return Path.GetFileName(path);
+    }
+
+    public static string GetFileNameWithoutExtension(string path)
+    {
+        return Path.GetFileNameWithoutExtension(path);
     }
 
     public static string GetAbsolute(Script script, string path)
@@ -71,6 +89,11 @@ public class Util
         if (Environment.OSVersion.Platform != PlatformID.Unix)
             return false;
 
+        if (string.IsNullOrWhiteSpace(extractTo))
+        {
+            throw ScriptRuntimeException.BadArgument(2, "GetResource", "extractTo is empty.");
+        }
+
         extractTo = Path.Combine(script.GetCwd(), extractTo);
 
         Uri uri = new Uri(url);
@@ -106,12 +129,34 @@ public class Util
         if (resourceType != ResourceType.Archive)
             return false;
 
-        if (!filename.EndsWith(".tar.gz"))
+        string[] supportedExtensions = new[]
+        {
+            ".tar.gz",
+            ".zip"
+        };
+
+        if (!supportedExtensions.Any(x => filename.EndsWith(x)))
             return false;
 
-        var extractResult = UnixUtil.RunCmd("tar", $"-xf {outputLocation} -C {exDir}");
-        if (extractResult.Exitcode != 0)
-            return false;
+        if (filename.EndsWith(".tar.gz"))
+        {
+            var extractResult = UnixUtil.RunCmd("tar", $"-xf {outputLocation} -C {exDir}");
+            if (extractResult.Exitcode != 0)
+                return false;
+        }
+        else if (filename.EndsWith(".zip"))
+        {
+            //Unzip using C#
+            try
+            {
+                ZipFile.ExtractToDirectory(outputLocation, exDir);
+            }
+            catch (Exception ex)
+            {
+                MugiLog.Error(ex.Message);
+                return false;
+            }
+        }
 
         string folderToCopy = string.Empty;
 
@@ -183,6 +228,18 @@ public class Util
     {
         dir = GetAbsolute(script, dir);
         Directory.Delete(dir, true);
+    }
+
+    //List dirs only list top level directories
+    public static string[] ListDirs(Script script, string dir)
+    {
+        dir = GetAbsolute(script, dir);
+        return Directory.GetDirectories(dir);
+    }
+
+    public static string[] ListDirs(Script script)
+    {
+        return Directory.GetDirectories(script.GetCwd());
     }
 
     #endregion

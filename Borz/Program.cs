@@ -1,4 +1,5 @@
 ﻿using Borz.Cli;
+using Borz.Core;
 using Spectre.Console.Cli;
 
 namespace Borz;
@@ -15,6 +16,7 @@ static class Program
             config.AddCommand<InitCommand>("init");
             config.AddCommand<CompileCommand>("compile")
                 .WithAlias("c");
+            config.AddCommand<RunCommand>("run");
             config.AddCommand<CleanCommand>("clean");
             config.AddCommand<GenerateCommand>("generate")
                 .WithAlias("g");
@@ -24,10 +26,11 @@ static class Program
         try
         {
             res = app.Run(args);
+            MugiLog.Wait();
         }
         catch (Exception e)
         {
-            //Ignore
+            // ignored
         }
 
         Core.Borz.Shutdown();

@@ -13,7 +13,6 @@ public class Log
 
     public static void Fatal(string message)
     {
-        MugiLog.Fatal(message);
         throw new Exception(message);
     }
 }

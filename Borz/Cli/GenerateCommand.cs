@@ -60,7 +60,8 @@ public class GenerateCommand : Command<GenerateCommand.Settings>
         }
 
         //This runs the build.borz command in the current directory.
-        Core.Borz.GenerateWorkspace(Directory.GetCurrentDirectory(), generator);
+        Core.Borz.RunScript(Directory.GetCurrentDirectory());
+        Core.Borz.GenerateWorkspace(generator);
         return 0;
     }
 }

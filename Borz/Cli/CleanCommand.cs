@@ -13,7 +13,8 @@ public class CleanCommand : Command<CleanCommand.Settings>
 
     public override int Execute([NotNull] CommandContext context, [NotNull] Settings settings)
     {
-        Core.Borz.CleanWorkspace(Directory.GetCurrentDirectory());
+        Core.Borz.RunScript(Directory.GetCurrentDirectory());
+        Core.Borz.CleanWorkspace();
         return 0;
     }
 }

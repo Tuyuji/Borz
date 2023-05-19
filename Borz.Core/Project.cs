@@ -43,20 +43,19 @@ public abstract class Project
         if (directory == String.Empty)
             directory = Directory.GetCurrentDirectory();
 
+        string ReplaceVars(string input)
+        {
+            return input.Replace("$PROJECTDIR", directory)
+                .Replace("$WORKSPACEDIR", Workspace.Location)
+                .Replace("$PROJECTNAME", name)
+                .Replace("$CONFIG", Borz.BuildConfig.Config);
+        }
+
         OutputDirectory = Borz.Config.Get("paths", "output");
         IntermediateDirectory = Borz.Config.Get("paths", "int");
 
-        //REPLACE $PROJECTDIR with the project directory
-        OutputDirectory = OutputDirectory.Replace("$PROJECTDIR", directory);
-        IntermediateDirectory = IntermediateDirectory.Replace("$PROJECTDIR", directory);
-
-        //Replace $WORKSPACEDIR with the workspace directory
-        OutputDirectory = OutputDirectory.Replace("$WORKSPACEDIR", Workspace.Location);
-        IntermediateDirectory = IntermediateDirectory.Replace("$WORKSPACEDIR", Workspace.Location);
-
-        //Replace $PROJECTNAME with the project name
-        OutputDirectory = OutputDirectory.Replace("$PROJECTNAME", name);
-        IntermediateDirectory = IntermediateDirectory.Replace("$PROJECTNAME", name);
+        OutputDirectory = ReplaceVars(OutputDirectory);
+        IntermediateDirectory = ReplaceVars(IntermediateDirectory);
 
         if (OutputDirectory == "")
             MugiLog.Fatal("Output directory is empty");
@@ -83,6 +82,13 @@ public abstract class Project
         var p = (Project?)method.Invoke(null, new object[] { script, name, type });
         if (p == null)
             throw new Exception("Create method on type " + t.Name + " returned null");
+
+        var projectCallback = script.Globals["OnProjectCreate"];
+        if (projectCallback is Closure pcd)
+        {
+            pcd.Call(p);
+        }
+
         return p;
     }
 

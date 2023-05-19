@@ -17,8 +17,10 @@ public class CProject : Project
     public List<string> Links = new();
     public Dictionary<PkgDep, bool> PkgDeps = new();
     public bool UsePIC = false;
+    public bool Symbols = false;
 
-    public string StdVersion = "";
+    //Version number for the C or Cpp standard to use.
+    public string StdVersion;
 
     //This is used to determine if the project was built or not.
     //If this is set to true, then the output binrary was created or updated.
@@ -27,6 +29,7 @@ public class CProject : Project
     public CProject(string name, BinType type, string directory = "", Language language = Language.C) : base(name, type,
         language, directory)
     {
+        StdVersion = "11";
     }
 
     public static CProject Create(Script script, string name, BinType type)

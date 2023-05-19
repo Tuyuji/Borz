@@ -155,6 +155,5 @@ public sealed class PackageNotFoundException : Exception
     public PackageNotFoundException(string pkgName, VersionType type, string version)
         : base(GetMessage(pkgName, type, version))
     {
-        MugiLog.Fatal(Message);
     }
 }

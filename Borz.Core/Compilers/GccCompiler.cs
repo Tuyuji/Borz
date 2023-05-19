@@ -1,3 +1,4 @@
+using System.Collections.Concurrent;
 using AkoSharp;
 using Borz.Core.Languages.C;
 using Microsoft.VisualBasic;
@@ -16,7 +17,7 @@ public class GccCompiler : ICCompiler
     public bool GenerateSourceDependencies { get; set; }
     public bool GenerateCompileCommands { get; set; }
 
-    public List<CppBuilder.CompileCommand> CompileCommands { get; } = new();
+    public ConcurrentBag<CppBuilder.CompileCommand> CompileCommands { get; } = new();
 
     public UnixUtil.RunOutput CompileObject(Project project, string sourceFile, string outputFile)
     {
@@ -33,8 +34,11 @@ public class GccCompiler : ICCompiler
     {
         List<string> cmdArgs = new();
 
+        if (project.Symbols)
+            cmdArgs.Add("-g");
+
         if (project.StdVersion != String.Empty)
-            cmdArgs.Add($"-std=" + project.StdVersion);
+            cmdArgs.Add($"-std=" + (project is CppProject ? "c++" : "c") + project.StdVersion);
 
         if (GenerateSourceDependencies)
             cmdArgs.Add("-MMD");
@@ -48,13 +52,14 @@ public class GccCompiler : ICCompiler
         if (project.UsePIC)
             cmdArgs.Add("-fPIC");
 
-        if (project.StdVersion != String.Empty)
-            cmdArgs.Add($"-std=" + project.StdVersion);
-
         foreach (var link in project.GetLibraries())
             cmdArgs.Add($"-l{link}");
 
-        cmdArgs.AddRange(new[] { "-o", outputFile, "-c", sourceFile });
+        cmdArgs.Add("-o");
+        cmdArgs.Add(outputFile);
+
+        cmdArgs.Add("-c");
+        cmdArgs.Add(sourceFile);
 
         bool useCpp = project.Language == Language.Cpp;
 
@@ -121,14 +126,14 @@ public class GccCompiler : ICCompiler
 
         cmdArgs.AddRange(objects);
 
+        foreach (var rpath in project.GetRPaths(unknownProject.GetPathAbs(unknownProject.OutputDirectory)))
+            cmdArgs.Add($"-Wl,-rpath=$ORIGIN/{rpath}");
+
         foreach (var libraryPath in project.GetLibraryPaths())
             cmdArgs.Add($"-L{libraryPath}");
 
         foreach (var link in project.GetLibraries())
             cmdArgs.Add($"-l{link}");
-
-        foreach (var rpath in project.GetRPaths(unknownProject.GetPathAbs(unknownProject.OutputDirectory)))
-            cmdArgs.Add($"-Wl,-rpath={rpath}");
 
         switch (project.Type)
         {

@@ -11,14 +11,16 @@ public static class Workspace
     public static List<Project> Projects = new();
     public static List<string> ExecutedBorzFiles = new();
 
+    public static WorkspaceSettings Settings = new();
+
     //Does init for workspace and running the inital borz script in current directory
-    public static void Init()
+    public static void Init(string location)
     {
         Project.Setup();
         ((ScriptLoaderBase)Script.DefaultOptions.ScriptLoader).ModulePaths = new string[] { "./?", "./?.lua" };
         ScriptRunner.RegisterTypes();
 
-        Location = Directory.GetCurrentDirectory();
+        Location = Path.GetFullPath(location);
 
         var projectConfig = Path.Combine(Location, "borzsettings.ako");
         if (File.Exists(projectConfig))
@@ -33,7 +35,7 @@ public static class Workspace
     public static void Run()
     {
         var script = ScriptRunner.CreateScript();
-        script.SetCwd(Directory.GetCurrentDirectory());
+        script.SetCwd(Location);
         ExecutedBorzFiles.Add(Path.GetFullPath("build.borz"));
         try
         {
@@ -41,9 +43,7 @@ public static class Workspace
         }
         catch (Exception exception)
         {
-            if (exception is SyntaxErrorException syntaxError)
-                MugiLog.Fatal($"File {syntaxError.Source}  Error: " + syntaxError.Message);
-            else if (exception is ScriptRuntimeException runtimeError)
+            if (exception is InterpreterException runtimeError)
             {
                 var callstack = runtimeError.CallStack[0];
                 if (callstack != null)
@@ -56,7 +56,11 @@ public static class Workspace
                     MugiLog.Fatal(runtimeError.Message);
                 }
             }
+            else
+                MugiLog.Fatal(exception.Message);
 
+            MugiLog.Wait();
+            MugiLog.Shutdown();
             Environment.Exit(1);
         }
     }

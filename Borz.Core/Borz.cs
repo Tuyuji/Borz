@@ -14,6 +14,8 @@ public static class Borz
 
     public static ParallelOptions ParallelOptions = new();
 
+    public static BuildConfig BuildConfig = new();
+
     public static void Init()
     {
         MugiLog.Init();
@@ -176,16 +178,13 @@ public static class Borz
         ParallelOptions.MaxDegreeOfParallelism = usableThreadCount;
     }
 
-    public static bool CompileWorkspace(string workspacePath, bool justLog = false)
+    public static void RunScript(string location)
     {
-        var oldDir = Directory.GetCurrentDirectory();
+        Workspace.Init(location);
+    }
 
-        //Set the current directory to the workspace path
-        Directory.SetCurrentDirectory(workspacePath);
-
-        //This runs the build.borz command in the current directory.
-        Workspace.Init();
-
+    public static bool CompileWorkspace(bool justLog = false)
+    {
         Core.Borz.UpdateMemInfo();
 
         var graph = new AdjacencyGraph<Project, Edge<Project>>();
@@ -205,12 +204,13 @@ public static class Borz
         }
         catch (NonAcyclicGraphException e)
         {
-            Directory.SetCurrentDirectory(oldDir);
             MugiLog.Fatal("Cyclic/Circular dependency detected, cannot continue.");
             return false;
         }
 
         var sortedProjects = algorithm.SortedVertices.ToList();
+
+        MugiLog.Info($"Config: {BuildConfig.Config}");
 
         sortedProjects.ForEach(prj =>
         {
@@ -218,17 +218,12 @@ public static class Borz
             var builder = IBuilder.GetBuilder(prj);
             builder.Build(prj, justLog);
         });
-        Directory.SetCurrentDirectory(oldDir);
+
         return true;
     }
 
-    public static bool CleanWorkspace(string workspacePath)
+    public static bool CleanWorkspace()
     {
-        var oldDir = Directory.GetCurrentDirectory();
-        Directory.SetCurrentDirectory(workspacePath);
-
-        Workspace.Init();
-
         Workspace.Projects.ForEach(prj =>
         {
             var intDir = prj.GetPathAbs(prj.IntermediateDirectory);
@@ -239,15 +234,11 @@ public static class Borz
                 Directory.Delete(outDir, true);
         });
 
-        Directory.SetCurrentDirectory(oldDir);
         return true;
     }
 
-    public static void GenerateWorkspace(string workspacePath, IGenerator generator)
+    public static void GenerateWorkspace(IGenerator generator)
     {
-        Directory.SetCurrentDirectory(workspacePath);
-        Workspace.Init();
-
         generator.Generate();
     }
 }
