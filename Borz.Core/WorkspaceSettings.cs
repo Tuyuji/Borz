@@ -5,6 +5,7 @@ namespace Borz.Core;
 [MoonSharpUserData]
 public class WorkspaceSettings
 {
+    public string Name = "Workspace";
     public List<string> Configs = new();
 
     public WorkspaceSettings()
