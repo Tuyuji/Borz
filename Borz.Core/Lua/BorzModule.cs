@@ -91,4 +91,14 @@ public class BorzModule
             needsRPathV.Boolean);
         return DynValue.FromObject(s, pkgDep);
     }
+
+    [MoonSharpModuleMethod]
+    public static DynValue isBuildConf(ScriptExecutionContext executionContext, CallbackArguments arguments)
+    {
+        Script s = executionContext.GetScript();
+        DynValue buildConfV = arguments.AsType(0, "isBuildConf", DataType.String, false);
+
+        var buildConf = buildConfV.String;
+        return DynValue.NewBoolean(Borz.BuildConfig.ConfigEquals(buildConf));
+    }
 }
