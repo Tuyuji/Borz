@@ -12,6 +12,25 @@ public static class Workspace
     public static List<string> ExecutedBorzFiles = new();
 
     public static WorkspaceSettings Settings = new();
+    public static Script Script;
+
+    public static void CallPreCompileEvent()
+    {
+        var preCompileCallback = Workspace.Script.Globals["OnPreCompile"];
+        if (preCompileCallback is Closure pcd)
+        {
+            pcd.Call();
+        }
+    }
+
+    public static void CallPostCompileEvent()
+    {
+        var postCompileCallback = Workspace.Script.Globals["OnPostCompile"];
+        if (postCompileCallback is Closure pcd)
+        {
+            pcd.Call();
+        }
+    }
 
     //Does init for workspace and running the inital borz script in current directory
     public static void Init(string location)
@@ -38,12 +57,12 @@ public static class Workspace
         if (Borz.BuildConfig.TargetPlatform == Lua.Platform.Unknown)
             Borz.BuildConfig.TargetPlatform = Borz.BuildConfig.HostPlatform;
 
-        var script = ScriptRunner.CreateScript();
-        script.SetCwd(Location);
+        Script = ScriptRunner.CreateScript();
+        Script.SetCwd(Location);
         ExecutedBorzFiles.Add(Path.GetFullPath("build.borz"));
         try
         {
-            script.DoFile("build.borz");
+            Script.DoFile("build.borz");
         }
         catch (Exception exception)
         {

@@ -243,12 +243,16 @@ public static class Borz
 
         MugiLog.Info($"Config: {BuildConfig.Config}");
 
+        Workspace.CallPreCompileEvent();
+
         sortedProjects.ForEach(prj =>
         {
             MugiLog.Info("===========================================");
             var builder = IBuilder.GetBuilder(prj);
             builder.Build(prj, justLog);
         });
+
+        Workspace.CallPostCompileEvent();
 
         return true;
     }
