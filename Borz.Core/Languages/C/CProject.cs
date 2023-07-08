@@ -527,13 +527,14 @@ public class CProject : Project
 
         foreach (var dependency in Dependencies)
         {
+            var outputName = dependency.GetOutputName();
             switch (dependency)
             {
                 case CppProject cppProject:
-                    libs.Add(cppProject.Name);
+                    libs.Add(outputName);
                     break;
                 case CProject cProject:
-                    libs.Add(cProject.Name);
+                    libs.Add(outputName);
                     break;
             }
         }

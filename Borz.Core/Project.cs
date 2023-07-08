@@ -23,11 +23,11 @@ public abstract class Project
         }
     }
 
-
     public string ProjectDirectory;
     public string Name;
     public BinType Type;
     public Language Language;
+    public string OutputName;
 
     public List<Project> Dependencies = new();
 
@@ -38,30 +38,28 @@ public abstract class Project
 
     public void CallFinishedCompiling() => FinishedCompiling?.Invoke(this, EventArgs.Empty);
 
+    public string GetOutputName()
+    {
+        return Utils.StandardReplace(OutputName).Replace("$NAME", Name);
+    }
+
     public Project(string name, BinType type, Language language, string directory = "", bool addToWorkspace = true)
     {
         if (directory == String.Empty)
             directory = Directory.GetCurrentDirectory();
 
-        string ReplaceVars(string input)
-        {
-            return input.Replace("$PROJECTDIR", directory)
-                .Replace("$WORKSPACEDIR", Workspace.Location)
-                .Replace("$PROJECTNAME", name)
-                .Replace("$CONFIG", Borz.BuildConfig.Config);
-        }
-
         OutputDirectory = Borz.Config.Get("paths", "output");
         IntermediateDirectory = Borz.Config.Get("paths", "int");
 
-        OutputDirectory = ReplaceVars(OutputDirectory);
-        IntermediateDirectory = ReplaceVars(IntermediateDirectory);
+        OutputDirectory = Utils.StandardProjectReplace(OutputDirectory, directory, name);
+        IntermediateDirectory = Utils.StandardProjectReplace(IntermediateDirectory, directory, name);
 
         if (OutputDirectory == "")
             MugiLog.Fatal("Output directory is empty");
         if (IntermediateDirectory == "")
             MugiLog.Fatal("Intermediate directory is empty");
 
+        OutputName = Borz.Config.Get("project", "output");
 
         this.ProjectDirectory = directory;
         this.Name = name;

@@ -94,10 +94,11 @@ public abstract class CcCompiler : ICCompiler
         project = unknownProject as CProject ?? throw new InvalidOperationException();
 
         string outputPath = project.OutputDirectory;
+        string outputName = project.GetOutputName();
 
         if (project.Type == BinType.StaticLib)
         {
-            string output = Path.Combine(outputPath, $"lib{project.Name}.a");
+            string output = Path.Combine(outputPath, $"lib{outputName}.a");
             return Utils.RunCmd("ar", $"-rcs \"{output}\" " + String.Join(" ", objects.ToArray()),
                 project.ProjectDirectory, JustLog);
         }
@@ -107,16 +108,16 @@ public abstract class CcCompiler : ICCompiler
         switch (project.Type)
         {
             case BinType.SharedObj:
-                outputPath = Path.Combine(outputPath, $"lib{project.Name}.so");
+                outputPath = Path.Combine(outputPath, $"lib{outputName}.so");
                 break;
             case BinType.StaticLib:
-                outputPath = Path.Combine(outputPath, $"lib{project.Name}.a");
+                outputPath = Path.Combine(outputPath, $"lib{outputName}.a");
                 break;
             case BinType.WindowsApp:
-                outputPath = Path.Combine(outputPath, $"{project.Name}.exe");
+                outputPath = Path.Combine(outputPath, $"{outputName}.exe");
                 break;
             default:
-                outputPath = Path.Combine(outputPath, project.Name);
+                outputPath = Path.Combine(outputPath, outputName);
                 break;
         }
 

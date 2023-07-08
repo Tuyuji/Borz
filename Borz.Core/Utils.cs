@@ -14,4 +14,19 @@ public static class Utils
         MugiLog.Info($"{command} {args}");
         return new UnixUtil.RunOutput(String.Empty, String.Empty, 0);
     }
+
+    public static string StandardReplace(string input)
+    {
+        return input
+            .Replace("$WORKSPACEDIR", Workspace.Location)
+            .Replace("$CONFIG", Borz.BuildConfig.Config)
+            .Replace("$TARGETPLATFORM", Borz.BuildConfig.TargetPlatform.ToString());
+    }
+
+    public static string StandardProjectReplace(string input, string projectDir, string projectName)
+    {
+        return StandardReplace(input)
+            .Replace("$PROJECTDIR", projectDir)
+            .Replace("$PROJECTNAME", projectName);
+    }
 }

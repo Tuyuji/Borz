@@ -19,6 +19,9 @@ linker.mold-
 paths.output "$PROJECTDIR/bin"
 paths.int    "$PROJECTDIR/bin-int"
 
+#Project
+project.output "$NAME"
+
 #Multi-Threading settings
 mt.enable+
 mt.minThreadMem "150MB"
