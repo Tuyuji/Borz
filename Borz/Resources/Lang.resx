@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<root>
+    <xsd:schema id="root" xmlns="" xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+                xmlns:msdata="urn:schemas-microsoft-com:xml-msdata">
+        <xsd:element name="root" msdata:IsDataSet="true">
+
+        </xsd:element>
+    </xsd:schema>
+    <resheader name="resmimetype">
+        <value>text/microsoft-resx</value>
+    </resheader>
+    <resheader name="version">
+        <value>1.3</value>
+    </resheader>
+    <resheader name="reader">
+        <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=2.0.0.0, Culture=neutral,
+            PublicKeyToken=b77a5c561934e089
+        </value>
+    </resheader>
+    <resheader name="writer">
+        <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=2.0.0.0, Culture=neutral,
+            PublicKeyToken=b77a5c561934e089
+        </value>
+    </resheader>
+
+    <data name="Compile.Desc.JustLog" xml:space="preserve">
+        <value>Print the commands that would be executed.</value>
+    </data>
+    <data name="Generate.Desc.Watch" xml:space="preserve">
+        <value>Watch for changes and regenerate.</value>
+    </data>
+    <data name="Generate.Error.UnknownGenerator" xml:space="preserve">
+        <value>Unknown generator {0}</value>
+    </data>
+    <data name="Generate.ListAvailableHeader" xml:space="preserve">
+        <value>Available generators:</value>
+    </data>
+    <data name="Init.Error.DirectoryExists" xml:space="preserve">
+        <value>Directory already exists.</value>
+    </data>
+    <data name="Init.Error.InvalidDirectoryName" xml:space="preserve">
+        <value>Invalid directory name.</value>
+    </data>
+    <data name="Init.Choice.Language" xml:space="preserve">
+        <value>Select a language</value>
+    </data>
+    <data name="Init.Error.Throw" xml:space="preserve">
+        <value>Error: </value>
+    </data>
+    <data name="Init.Choice.BinaryType" xml:space="preserve">
+        <value>Select a binary type</value>
+    </data>
+    <data name="Run.Error.ProjectNotFound" xml:space="preserve">
+        <value>Project not found.</value>
+    </data>
+    <data name="Init.Error.ProjectNotExe" xml:space="preserve">
+        <value>Project is not a console app or a windows app.</value>
+    </data>
+    <data name="Run.Error.ExeNotFound" xml:space="preserve">
+        <value>Executable not found.</value>
+    </data>
+</root>

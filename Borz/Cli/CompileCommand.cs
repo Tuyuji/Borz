@@ -10,7 +10,7 @@ public class CompileCommand : Command<CompileCommand.Settings>
 {
     public sealed class Settings : CommandSettings
     {
-        [Description("Print the commands that would be executed.")]
+        [LocalDesc("Compile.Desc.JustLog")]
         [CommandOption("-n|--just-log")]
         [DefaultValue(false)]
         public bool JustLog { get; init; }

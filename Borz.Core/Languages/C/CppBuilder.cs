@@ -27,7 +27,9 @@ public class CppBuilder : IBuilder
         var linker = CreateLinker();
 
         if (!ValidateCompiler(compiler) || !ValidateLinker(linker))
-            return false;
+        {
+            throw new Exception("Compiler or linker is invalid");
+        }
 
         compiler.GenerateSourceDependencies = true;
         compiler.GenerateCompileCommands = generateCompileCommands;

@@ -36,7 +36,15 @@ public class Util
         return tuple;
     }
 
+    [Obsolete("Use BuildConfig.HostPlatform or Util.getHostPlatform instead.")]
     public static Platform getPlatform()
+    {
+        Log.warning(
+            "You are using Util.getPlatform() which is deprecated. Use BuildConfig.HostPlatform or Util.getHostPlatform instead.");
+        return getHostPlatform();
+    }
+
+    public static Platform getHostPlatform()
     {
         if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
         {

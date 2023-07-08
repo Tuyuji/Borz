@@ -1,7 +1,7 @@
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using Borz.Core;
-using Spectre.Console;
+using Borz.Resources;
 using Spectre.Console.Cli;
 
 namespace Borz.Cli;
@@ -22,14 +22,14 @@ public class RunCommand : Command<RunCommand.Settings>
         //see if the name is in Workspace, the projects is a list not a dictionary.
         if (Workspace.Projects.All(x => x.Name != settings.Name))
         {
-            AnsiConsole.WriteLine("Project not found.");
+            Console.WriteLine(Lang.Run_Error_ProjectNotFound);
             return 1;
         }
 
         var proj = Workspace.Projects.First(x => x.Name == settings.Name);
         if (!(proj.Type is BinType.ConsoleApp or BinType.WindowsApp))
         {
-            AnsiConsole.WriteLine("Project is not a console app or a windows app.");
+            Console.WriteLine(Lang.Init_Error_ProjectNotExe);
             return 1;
         }
 
@@ -42,7 +42,7 @@ public class RunCommand : Command<RunCommand.Settings>
 
         if (!File.Exists(exe))
         {
-            AnsiConsole.WriteLine("Executable not found.");
+            Console.WriteLine(Lang.Run_Error_ExeNotFound);
             return 1;
         }
 

@@ -1,6 +1,7 @@
 using System.Diagnostics.CodeAnalysis;
 using System.Reflection;
 using Borz.Core;
+using Borz.Resources;
 using Spectre.Console;
 using Spectre.Console.Cli;
 
@@ -19,20 +20,20 @@ public class InitCommand : Command<InitCommand.Settings>
     {
         if (Directory.Exists(settings.Name))
         {
-            AnsiConsole.WriteLine("Directory already exists.");
+            Console.WriteLine(Lang.Init_Error_DirectoryExists);
             return 1;
         }
 
         //see if the name is a valid directory name.
         if (settings.Name.IndexOfAny(Path.GetInvalidPathChars()) != -1)
         {
-            AnsiConsole.WriteLine("Invalid directory name.");
+            Console.WriteLine(Lang.Init_Error_InvalidDirectoryName);
             return 1;
         }
 
         var language = AnsiConsole.Prompt(
             new SelectionPrompt<Language>()
-                .Title("Select a language")
+                .Title(Lang.Init_Choice_Language)
                 .AddChoices(Language.C, Language.Cpp)
         );
 
@@ -52,7 +53,7 @@ public class InitCommand : Command<InitCommand.Settings>
         }
         catch (Exception ex)
         {
-            AnsiConsole.WriteLine("Error: " + ex.Message);
+            Console.WriteLine(Lang.Init_Error_Throw + ex.Message);
             Directory.SetCurrentDirectory("..");
             Directory.Delete(settings.Name);
             return 1;
@@ -65,7 +66,7 @@ public class InitCommand : Command<InitCommand.Settings>
     {
         var binType = AnsiConsole.Prompt(
             new SelectionPrompt<BinType>()
-                .Title("Select a binary type")
+                .Title(Lang.Init_Choice_BinaryType)
                 .AddChoices(BinType.ConsoleApp, BinType.SharedObj, BinType.StaticLib)
         );
 

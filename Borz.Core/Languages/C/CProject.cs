@@ -22,11 +22,12 @@ public class CProject : Project
     public string PchHeader = "";
 
     //Version number for the C or Cpp standard to use.
+    //If set to none, then no standard will be used.
     public string StdVersion;
 
     //This is used to determine if the project was built or not.
     //If this is set to true, then the output binrary was created or updated.
-    public bool IsBuilt = false;
+    [MoonSharpHidden] public bool IsBuilt = false;
 
     public CProject(string name, BinType type, string directory = "", Language language = Language.C) : base(name, type,
         language, directory)
@@ -40,6 +41,275 @@ public class CProject : Project
         script.Globals.Set(name, DynValue.FromObject(script, proj));
         return proj;
     }
+
+    #region Lua specific
+
+    #region Lua Include
+
+    private void LuaInclude(DynValue path, bool isPublic = true)
+    {
+        if (path.Type == DataType.String)
+        {
+            AddIncludePath(path.String, isPublic);
+            return;
+        }
+
+        if (path.Type != DataType.Table)
+            throw new ScriptRuntimeException("Expected string or table for path");
+
+        foreach (var v in path.Table.Values)
+        {
+            if (v.Type != DataType.String)
+                throw new ScriptRuntimeException("Expected string elements in table");
+
+            AddIncludePath(v.String, isPublic);
+        }
+    }
+
+    public void pubInclude(Script script, DynValue path)
+    {
+        LuaInclude(path, true);
+    }
+
+    public void privInclude(Script script, DynValue path)
+    {
+        LuaInclude(path, false);
+    }
+
+    #endregion
+
+    #region Lua Source
+
+    public void source(Script script, DynValue path)
+    {
+        if (path.Type == DataType.String)
+        {
+            AddSourceFile(path.String);
+            return;
+        }
+
+        if (path.Type != DataType.Table)
+            throw new ScriptRuntimeException("Expected string or table for path");
+
+        foreach (var v in path.Table.Values)
+        {
+            if (v.Type != DataType.String)
+                throw new ScriptRuntimeException("Expected string elements in table");
+
+            AddSourceFile(v.String);
+        }
+    }
+
+    public void sourceGlob(Script script, DynValue path)
+    {
+        if (path.Type == DataType.String)
+        {
+            AddSourceGlob(path.String);
+            return;
+        }
+
+        if (path.Type != DataType.Table)
+            throw new ScriptRuntimeException("Expected string or table for path");
+
+        foreach (var v in path.Table.Values)
+        {
+            if (v.Type != DataType.String)
+                throw new ScriptRuntimeException("Expected string elements in table");
+
+            AddSourceFile(v.String);
+        }
+    }
+
+    #endregion
+
+    #region Lua Dep
+
+    private void LuaAddDep(DynValue dep, bool isPublic = false)
+    {
+        if (dep.Type != DataType.UserData)
+            throw new ScriptRuntimeException("Expected PkgDep or Project for dep");
+
+        if (dep.UserData.Object is PkgDep pkgDep)
+        {
+            AddDep(pkgDep, isPublic);
+            return;
+        }
+
+        if (dep.UserData.Object is Project proj)
+        {
+            AddDep(proj);
+            return;
+        }
+    }
+
+    /*
+     * prj.dep {
+     *      {sdl, true},
+     * }
+     */
+    public void dep(Script script, DynValue depTable)
+    {
+        if (depTable.Type != DataType.Table)
+            throw new ScriptRuntimeException("Expected table for dep");
+
+        foreach (var v in depTable.Table.Values)
+        {
+            //should be a table with 2 elements
+            //first element is the dep
+            //second element is if it is public or not
+            if (v.Type != DataType.Table)
+                throw new ScriptRuntimeException("Expected table elements in table");
+
+            if (v.Table.Length != 2)
+                throw new ScriptRuntimeException("Expected table with 2 elements");
+
+            var dep = v.Table.Get(0) ?? throw new ScriptRuntimeException("Expected dep in table");
+            var isPublic = v.Table.Get(1) ?? throw new ScriptRuntimeException("Expected isPublic in table");
+
+            if (dep.Type != DataType.UserData)
+                throw new ScriptRuntimeException("Expected PkgDep or Project for dep");
+
+            if (isPublic.Type != DataType.Boolean)
+                throw new ScriptRuntimeException("Expected boolean for isPublic");
+
+
+            LuaAddDep(dep, isPublic.Boolean);
+        }
+    }
+
+    /*
+     * prj.pubDep {
+     *      sdl,
+     * }
+     */
+    public void pubDep(Script script, DynValue dep)
+    {
+        if (dep.Type == DataType.Table)
+        {
+            foreach (var v in dep.Table.Values)
+            {
+                LuaAddDep(v, true);
+            }
+        }
+        else
+        {
+            LuaAddDep(dep, true);
+        }
+    }
+
+    public void privDep(Script script, DynValue dep)
+    {
+        if (dep.Type == DataType.Table)
+        {
+            foreach (var v in dep.Table.Values)
+            {
+                LuaAddDep(v, false);
+            }
+        }
+        else
+        {
+            LuaAddDep(dep, false);
+        }
+    }
+
+    #endregion
+
+    #region Lua Define
+
+    private void LuaAddDefine(DynValue define)
+    {
+        if (define.Type == DataType.String)
+        {
+            var str = define.String;
+            if (str == null)
+                throw new ScriptRuntimeException("Expected string for define");
+
+            if (!str.Contains('='))
+            {
+                AddDefine(str);
+                return;
+            }
+
+            var split = str.Split('=', 2);
+            if (split.Length != 2)
+                throw new ScriptRuntimeException("Expected string in format of 'name=value' for define");
+
+            AddDefine(split[0], split[1]);
+            return;
+        }
+    }
+
+    /*
+     * prj.define "ASDF"
+     * prj.define "ASDF=YES"
+     * prj.define {"ASDF", "ASDF=YES"}
+     */
+    public void define(Script script, DynValue def)
+    {
+        if (def.Type == DataType.Table)
+        {
+            foreach (var v in def.Table.Values)
+            {
+                LuaAddDefine(v);
+            }
+        }
+        else
+        {
+            LuaAddDefine(def);
+        }
+    }
+
+    #endregion
+
+    #region Lua LibraryPath
+
+    public void libPath(Script script, DynValue path)
+    {
+        if (path.Type == DataType.String)
+        {
+            AddLibraryPath(path.String);
+            return;
+        }
+
+        if (path.Type != DataType.Table)
+            throw new ScriptRuntimeException("Expected string or table for path");
+
+        foreach (var v in path.Table.Values)
+        {
+            if (v.Type != DataType.String)
+                throw new ScriptRuntimeException("Expected string elements in table");
+
+            AddLibraryPath(v.String);
+        }
+    }
+
+    #endregion
+
+    #region Lua Links
+
+    public void links(Script script, DynValue libs)
+    {
+        if (libs.Type == DataType.String)
+        {
+            AddLink(libs.String);
+            return;
+        }
+
+        if (libs.Type != DataType.Table)
+            throw new ScriptRuntimeException("Expected string or table for libs");
+
+        foreach (var v in libs.Table.Values)
+        {
+            if (v.Type != DataType.String)
+                throw new ScriptRuntimeException("Expected string elements in table");
+
+            AddLink(v.String);
+        }
+    }
+
+    #endregion
+
+    #endregion
 
     public void AddDep(PkgDep dep, bool isPublic = false)
     {
@@ -83,11 +353,11 @@ public class CProject : Project
         }
     }
 
-    public void AddIncludePaths(string[] paths, bool isPrivate = true)
+    public void AddIncludePaths(string[] paths, bool isPublic = true)
     {
         foreach (string s in paths)
         {
-            AddIncludePath(s, isPrivate);
+            AddIncludePath(s, isPublic);
         }
     }
 

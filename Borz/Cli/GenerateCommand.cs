@@ -3,7 +3,7 @@ using System.Diagnostics.CodeAnalysis;
 using System.Reflection;
 using Borz.Core;
 using Borz.Core.Generators;
-using Spectre.Console;
+using Borz.Resources;
 using Spectre.Console.Cli;
 
 namespace Borz.Cli;
@@ -19,7 +19,7 @@ public class GenerateCommand : Command<GenerateCommand.Settings>
     {
         [CommandArgument(0, "<generator>")] public string Generator { get; set; }
 
-        [Description("Watch for changes and regenerate.")]
+        [LocalDesc("Generate.Desc.Watch")]
         [CommandOption("-w|--watch")]
         [DefaultValue(false)]
         public bool Watch { get; init; }
@@ -42,11 +42,11 @@ public class GenerateCommand : Command<GenerateCommand.Settings>
         var genIndex = Array.IndexOf(genNames, settings.Generator.ToLower());
         if (genIndex == -1)
         {
-            AnsiConsole.MarkupLine($"Unknown generator {settings.Generator}");
-            AnsiConsole.MarkupLine($"Available generators:");
+            Console.WriteLine(Lang.Generate_Error_UnknownGenerator, settings.Generator);
+            Console.WriteLine(Lang.Generate_ListAvailableHeader);
             foreach (var genName in genNames)
             {
-                AnsiConsole.MarkupLine($"  {genName}");
+                Console.WriteLine($@"  {genName}");
             }
 
             return 1;
@@ -55,7 +55,7 @@ public class GenerateCommand : Command<GenerateCommand.Settings>
         var generator = Activator.CreateInstance(genTypes[genIndex]) as IGenerator;
         if (generator == null)
         {
-            AnsiConsole.MarkupLine($"[red]Unknown generator {settings.Generator}[/]");
+            Console.WriteLine(Lang.Generate_Error_UnknownGenerator, settings.Generator);
             return 1;
         }
 

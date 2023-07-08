@@ -34,9 +34,9 @@ public class LuaPath
         return result;
     }
 
-    public static string getFileName(Script script, string path)
+    public static string? getFileName(Script script, string path)
     {
-        string result;
+        string? result;
         using (new TempSetCwd(script))
         {
             result = Path.GetFileName(path);

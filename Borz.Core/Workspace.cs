@@ -34,6 +34,10 @@ public static class Workspace
 
     public static void Run()
     {
+        //Assume if no target platform is set, we are building for host platform
+        if (Borz.BuildConfig.TargetPlatform == Lua.Platform.Unknown)
+            Borz.BuildConfig.TargetPlatform = Borz.BuildConfig.HostPlatform;
+
         var script = ScriptRunner.CreateScript();
         script.SetCwd(Location);
         ExecutedBorzFiles.Add(Path.GetFullPath("build.borz"));
@@ -52,7 +56,8 @@ public static class Workspace
 
             MugiLog.Wait();
             MugiLog.Shutdown();
-            Environment.Exit(1);
+            //rethrow
+            throw;
         }
     }
 

@@ -32,7 +32,12 @@ public class BorzModule
             Continuation = new CallbackFunction((c, a) =>
             {
                 c.GetScript().SetCwd(oldCwd);
-                return null;
+                if (a.Count == 1)
+                    return a[0];
+                if (a.Count == 0)
+                    return DynValue.Nil;
+
+                return DynValue.NewTuple(a.GetArray());
             }),
             Args = new DynValue[] { },
         };
