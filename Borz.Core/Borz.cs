@@ -1,5 +1,4 @@
 using System.Collections.Concurrent;
-using System.Diagnostics;
 using System.Reflection;
 using System.Runtime.InteropServices;
 using AkoSharp;
@@ -22,17 +21,6 @@ public static class Borz
 
     public static void Init()
     {
-        bool isDebug = false;
-        //see if a debugger is attached
-        //see if were a debug build
-#if DEBUG
-        isDebug = true;
-#endif
-        if (Debugger.IsAttached || isDebug)
-        {
-            MugiLog.MinLevel = LogLevel.Debug;
-        }
-
         MugiLog.Init();
 
         ShortTypeRegistry.AutoRegister();

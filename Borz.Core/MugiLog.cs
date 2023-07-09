@@ -1,4 +1,5 @@
 using System.Collections.Concurrent;
+using System.Diagnostics;
 using System.Text;
 
 namespace Borz.Core;
@@ -135,7 +136,7 @@ public static class MugiLog
 
     private static void LowLevelWrite(LogLevel level, string message)
     {
-        if (level < MinLevel)
+        if (!Debugger.IsAttached && level < MinLevel)
             return;
 
         _logQueue.Enqueue(new LogInstance(level, message, DateTime.Now));
