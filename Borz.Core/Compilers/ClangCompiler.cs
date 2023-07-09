@@ -13,7 +13,7 @@ public class ClangCompiler : CcCompiler
     public override bool IsSupportedExt(out string reason)
     {
         //Make sure clang is installed
-        var res = Utils.RunCmd("clang", "--version");
+        var res = Utils.RunCmd(CCompilerElf, "--version");
         if (res.Exitcode != 0)
         {
             reason = "Clang is not installed.";

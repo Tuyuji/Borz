@@ -20,6 +20,7 @@ public class CProject : Project
     public bool Symbols = false;
     public string PchSource = "";
     public string PchHeader = "";
+    public bool StaticStdLib = false;
 
     //Version number for the C or Cpp standard to use.
     //If set to none, then no standard will be used.

@@ -51,6 +51,12 @@ namespace Borz.Resources {
             }
         }
         
+        internal static string Compile_Desc_Platform {
+            get {
+                return ResourceManager.GetString("Compile.Desc.Platform", resourceCulture);
+            }
+        }
+        
         internal static string Generate_Desc_Watch {
             get {
                 return ResourceManager.GetString("Generate.Desc.Watch", resourceCulture);

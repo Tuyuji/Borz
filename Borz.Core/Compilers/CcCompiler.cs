@@ -71,7 +71,7 @@ public abstract class CcCompiler : ICCompiler
                 {
                     Directory = project.ProjectDirectory,
                     Arguments = cmdArgs.ToArray(),
-                    Command = compiler,
+                    Command = compiler + " " + Strings.Join(cmdArgs.ToArray(), " "),
                     File = sourceFile,
                     Output = outputFile
                 });
@@ -105,21 +105,7 @@ public abstract class CcCompiler : ICCompiler
 
         List<string> cmdArgs = new();
 
-        switch (project.Type)
-        {
-            case BinType.SharedObj:
-                outputPath = Path.Combine(outputPath, $"lib{outputName}.so");
-                break;
-            case BinType.StaticLib:
-                outputPath = Path.Combine(outputPath, $"lib{outputName}.a");
-                break;
-            case BinType.WindowsApp:
-                outputPath = Path.Combine(outputPath, $"{outputName}.exe");
-                break;
-            default:
-                outputPath = Path.Combine(outputPath, outputName);
-                break;
-        }
+        outputPath = project.GetOutputFilePath();
 
         cmdArgs.Add("-o");
         cmdArgs.Add(outputPath);
@@ -131,6 +117,7 @@ public abstract class CcCompiler : ICCompiler
 
         AddLibraryPaths(project, ref cmdArgs);
         AddLibraries(project, ref cmdArgs);
+        AddStaticStd(project, ref cmdArgs);
 
         switch (project.Type)
         {
@@ -251,6 +238,19 @@ public abstract class CcCompiler : ICCompiler
             args.Add($"-std=" + (project is CppProject ? "c++" : "c") + project.StdVersion);
         else if (project.StdVersion == "none")
             args.Add("-nostdlib");
+    }
+
+    public void AddStaticStd(CProject project, ref List<string> args)
+    {
+        if (project.StaticStdLib)
+        {
+            args.Add("-static-libgcc");
+            args.Add("-static-libstdc++");
+            args.Add("-Wl,-Bstatic");
+            args.Add("-lstdc++");
+            args.Add("-lpthread");
+            args.Add("-Wl,-Bdynamic");
+        }
     }
 
     public void AddPic(CProject project, ref List<string> args)

@@ -121,4 +121,11 @@ public abstract class Project
 
         return absPaths;
     }
+
+    public string GetOutputFilePath()
+    {
+        var outputName = GetOutputName();
+        var outputFileName = Utils.AddPlatformIfixsToFileName(outputName, Type);
+        return Path.Combine(OutputDirectory, outputFileName);
+    }
 }

@@ -27,6 +27,9 @@
     <data name="Compile.Desc.JustLog" xml:space="preserve">
         <value>Print the commands that would be executed.</value>
     </data>
+    <data name="Compile.Desc.Platform" xml:space="preserve">
+        <value>Select the target platform to compile to.</value>
+    </data>
     <data name="Generate.Desc.Watch" xml:space="preserve">
         <value>Watch for changes and regenerate.</value>
     </data>

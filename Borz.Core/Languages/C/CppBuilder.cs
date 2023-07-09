@@ -129,6 +129,15 @@ public class CppBuilder : IBuilder
         }
 
         bool needToRelink = NeedRelink(project) || pchCompiled;
+        if (!needToRelink)
+        {
+            //If the binary doesn't exist, we need to link it
+            if (!File.Exists(project.GetOutputFilePath()))
+            {
+                MugiLog.Debug("Binary doesn't exist, need to relink.");
+                needToRelink = true;
+            }
+        }
 
         if (needToRelink || sourceFilesToCompile.Count != 0)
         {
@@ -331,10 +340,16 @@ public class CppBuilder : IBuilder
                 var result = compiler.CompileObject(project, sourceFile, objFilePath);
                 if (result.Exitcode != 0)
                 {
-                    //Something fucked up
+                    //Something messed up
                     var execp = new Exception("Failed to compile.\n" + result.Error);
                     MugiLog.Fatal(result.Error);
                     throw execp;
+                }
+
+                if (result.Error.Length > 3)
+                {
+                    //Some warning
+                    MugiLog.Warning(result.Error);
                 }
             }
 

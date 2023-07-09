@@ -10,6 +10,11 @@ compiler.cxx &Gcc
 linker.c   &Gcc
 linker.cxx &Gcc
 
+#Some cross compiling help
+#Format is <host>.<target>.<compiler>
+linux64.mingw64.c "x86_64-w64-mingw32-gcc"
+linux64.mingw64.cxx "x86_64-w64-mingw32-g++"
+
 #Not setting this to true for default since
 #I don't know if GCC will error out if its not found.
 #TODO: Have a check if mold exists and prefer it if it does.

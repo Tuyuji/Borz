@@ -5,13 +5,41 @@ namespace Borz.Core.Compilers;
 [ShortType("Gcc")]
 public class GccCompiler : CcCompiler
 {
-    public override string CCompilerElf => "gcc";
-    public override string CppCompilerElf => "g++";
+    private string compilerElf = "gcc";
+    private string cppCompilerElf = "g++";
+
+    public override string CCompilerElf => compilerElf;
+    public override string CppCompilerElf => cppCompilerElf;
+
+    public GccCompiler()
+    {
+        if (Borz.BuildConfig.HostPlatform != Borz.BuildConfig.TargetPlatform)
+        {
+            //Cross compiling!
+            if (Borz.BuildConfig.HostPlatform != Lua.Platform.Linux)
+            {
+                throw new NotSupportedException("Cross compiling is only supported on Linux for now.");
+            }
+
+            switch (Borz.BuildConfig.TargetPlatform)
+            {
+                case Lua.Platform.Windows:
+                    compilerElf = Borz.Config.Get("linux64", "mingw64", "c");
+                    cppCompilerElf = Borz.Config.Get("linux64", "mingw64", "cxx");
+                    break;
+                case Lua.Platform.MacOS:
+                    throw new NotSupportedException(
+                        "Cross compiling to MacOS is not supported yet, if you know how to get darling to work, let me know.");
+                default:
+                    throw new NotSupportedException("Cross compiling to this platform is not supported yet.");
+            }
+        }
+    }
 
     public override bool IsSupportedExt(out string reason)
     {
         //Make sure gcc is installed
-        var res = Utils.RunCmd("gcc", "--version");
+        var res = Utils.RunCmd(CCompilerElf, "--version");
         if (res.Exitcode != 0)
         {
             reason = "GCC is not installed.";

@@ -29,4 +29,69 @@ public static class Utils
             .Replace("$PROJECTDIR", projectDir)
             .Replace("$PROJECTNAME", projectName);
     }
+
+    public static PlatformInfo GetTargetPlatformInfo()
+    {
+        switch (Borz.BuildConfig.TargetPlatform)
+        {
+            case Lua.Platform.Android:
+            case Lua.Platform.Linux:
+                return new PlatformInfo()
+                {
+                    ExecutablePrefix = "",
+                    ExecutableExtension = "",
+
+                    SharedLibraryPrefix = "lib",
+                    SharedLibraryExtension = ".so",
+
+                    StaticLibraryPrefix = "lib",
+                    StaticLibraryExtension = ".a"
+                };
+            case Lua.Platform.iOS:
+            case Lua.Platform.MacOS:
+                return new PlatformInfo()
+                {
+                    ExecutablePrefix = "",
+                    ExecutableExtension = "",
+
+                    SharedLibraryPrefix = "lib",
+                    SharedLibraryExtension = ".dylib",
+
+                    StaticLibraryPrefix = "lib",
+                    StaticLibraryExtension = ".a"
+                };
+            case Lua.Platform.Windows:
+                return new PlatformInfo()
+                {
+                    ExecutablePrefix = "",
+                    ExecutableExtension = ".exe",
+
+                    SharedLibraryPrefix = "",
+                    SharedLibraryExtension = ".dll",
+
+                    StaticLibraryPrefix = "",
+                    StaticLibraryExtension = ".lib"
+                };
+            default:
+                throw new ArgumentOutOfRangeException();
+        }
+    }
+
+    public static string AddPlatformIfixsToFileName(string filename, BinType type)
+    {
+        var info = GetTargetPlatformInfo();
+        switch (type)
+        {
+            case BinType.ConsoleApp:
+                return $"{info.ExecutablePrefix}{filename}{info.ExecutableExtension}";
+            case BinType.SharedObj:
+                return $"{info.SharedLibraryPrefix}{filename}{info.SharedLibraryExtension}";
+            case BinType.StaticLib:
+                return $"{info.StaticLibraryPrefix}{filename}{info.StaticLibraryExtension}";
+            case BinType.WindowsApp:
+                return $"{info.ExecutablePrefix}{filename}{info.ExecutableExtension}";
+            default:
+                throw new ArgumentOutOfRangeException(nameof(type), type, null);
+        }
+    }
 }
