@@ -22,6 +22,8 @@ public class CppBuilder : IBuilder
         }
 
         bool generateCompileCommands = ShouldGenerateCompileCommands();
+        //see if we should combind this into the workspace compile_commands.json
+        bool doWorkspaceCompileCommands = Borz.Config.Get("builder", "cpp", "combineCmds");
 
         var compiler = CreateCompiler();
         var linker = CreateLinker();
@@ -125,7 +127,11 @@ public class CppBuilder : IBuilder
             stopwatch.Stop();
             compileTime = stopwatch.ElapsedMilliseconds;
             if (generateCompileCommands)
-                WriteCompileCommands(project.ProjectDirectory, compiler.CompileCommands.ToArray());
+            {
+                WriteCompileCommands(
+                    doWorkspaceCompileCommands ? Workspace.Location : project.ProjectDirectory,
+                    compiler.CompileCommands.ToArray());
+            }
         }
 
         bool needToRelink = NeedRelink(project) || pchCompiled;

@@ -17,7 +17,7 @@ public class RunCommand : Command<RunCommand.Settings>
 
     public override int Execute([NotNull] CommandContext context, [NotNull] Settings settings)
     {
-        Core.Borz.RunScript(Directory.GetCurrentDirectory());
+        Workspace.Init(Directory.GetCurrentDirectory());
 
         //see if the name is in Workspace, the projects is a list not a dictionary.
         if (Workspace.Projects.All(x => x.Name != settings.Name))

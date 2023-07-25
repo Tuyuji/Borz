@@ -12,8 +12,10 @@ linker.cxx &Gcc
 
 #Some cross compiling help
 #Format is <host>.<target>.<compiler>
-linux64.mingw64.c "x86_64-w64-mingw32-gcc"
-linux64.mingw64.cxx "x86_64-w64-mingw32-g++"
+linux64.windows.c "x86_64-w64-mingw32-gcc"
+linux64.windows.cxx "x86_64-w64-mingw32-g++"
+linux64.wasm.c "emcc"
+linux64.wasm.cxx "em++"
 
 #Not setting this to true for default since
 #I don't know if GCC will error out if its not found.
@@ -35,3 +37,6 @@ mt.maxThreads   -1
 
 #Builder settings
 builder.cpp.compileCmds-
+#Prefer a single compile_commands.json in the workspace folder than
+#one in every project folder.
+builder.cpp.combineCmds+

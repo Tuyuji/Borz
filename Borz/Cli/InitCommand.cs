@@ -32,7 +32,7 @@ public class InitCommand : Command<InitCommand.Settings>
         }
 
         var language = AnsiConsole.Prompt(
-            new SelectionPrompt<Language>()
+            new SelectionPrompt<string>()
                 .Title(Lang.Init_Choice_Language)
                 .AddChoices(Language.C, Language.Cpp)
         );

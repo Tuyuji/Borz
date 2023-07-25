@@ -118,6 +118,7 @@ public abstract class CcCompiler : ICCompiler
         AddLibraryPaths(project, ref cmdArgs);
         AddLibraries(project, ref cmdArgs);
         AddStaticStd(project, ref cmdArgs);
+        AddSymbols(project, ref cmdArgs);
 
         switch (project.Type)
         {
@@ -230,12 +231,24 @@ public abstract class CcCompiler : ICCompiler
     {
         if (project.Symbols)
             args.Add("-g");
+        else
+            args.Add("-s");
     }
 
     public void AddStdVersion(CProject project, ref List<string> args)
     {
         if (project.StdVersion != String.Empty)
-            args.Add($"-std=" + (project is CppProject ? "c++" : "c") + project.StdVersion);
+        {
+            if (project.StdVersion.All(char.IsDigit))
+            {
+                args.Add($"-std=" + (project is CppProject ? "c++" : "c") + project.StdVersion);
+            }
+            else
+            {
+                //just pass what ever they put in
+                args.Add($"-std=" + project.StdVersion);
+            }
+        }
         else if (project.StdVersion == "none")
             args.Add("-nostdlib");
     }
@@ -263,6 +276,13 @@ public abstract class CcCompiler : ICCompiler
 
     public void AddDefines(CProject project, ref List<string> args)
     {
+        var platformInfo = Borz.BuildConfig.TargetInfo;
+        if (platformInfo.Defines != null)
+            foreach (var define in platformInfo.Defines)
+            {
+                args.Add(define.Value == null ? $"-D{define.Key}" : $"-D{define.Key}={define.Value}");
+            }
+
         foreach (var define in project.GetDefines())
         {
             args.Add(define.Value == null ? $"-D{define.Key}" : $"-D{define.Key}={define.Value}");

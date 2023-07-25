@@ -4,10 +4,11 @@ using MoonSharp.Interpreter;
 namespace Borz.Core.Languages.C;
 
 [MoonSharpUserData]
-[ProjectLanguage(Language.Cpp)]
+[ProjectLanguage(Core.Language.Cpp)]
 public class CppProject : CProject
 {
-    public CppProject(string name, BinType type, string directory = "", Language language = Language.Cpp) : base(name,
+    public CppProject(string name, BinType type, string directory = "", string language = Core.Language.Cpp) : base(
+        name,
         type, directory, language)
     {
         StdVersion = "17";

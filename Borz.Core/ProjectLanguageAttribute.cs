@@ -2,9 +2,9 @@ namespace Borz.Core;
 
 public class ProjectLanguageAttribute : Attribute
 {
-    public Language Language { get; }
+    public string Language { get; }
 
-    public ProjectLanguageAttribute(Language language)
+    public ProjectLanguageAttribute(string language)
     {
         Language = language;
     }

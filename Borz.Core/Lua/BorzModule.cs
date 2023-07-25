@@ -19,11 +19,30 @@ public class BorzModule
         var attribs = File.GetAttributes(fullPath);
         if (attribs.HasFlag(FileAttributes.Directory))
         {
-            fullPath = Path.Combine(fullPath, "build.borz");
+            var buildBorz = Path.Combine(fullPath, "build.borz");
+            var mainLua = Path.Combine(fullPath, "main.lua");
+            if (File.Exists(buildBorz))
+            {
+                fullPath = buildBorz;
+            }
+            else if (File.Exists(mainLua))
+            {
+                fullPath = mainLua;
+            }
+            else
+            {
+                throw new FileNotFoundException($"Could not find build.borz or main.lua in {fullPath}");
+            }
+        }
+
+        string friendlyName = Path.GetFileName(fullPath);
+        if (Workspace.ExecutedBorzFiles.Count != 0)
+        {
+            friendlyName = Path.GetRelativePath(Workspace.Location, fullPath);
         }
 
 
-        DynValue fn = s.LoadFile(fullPath, null, Path.GetRelativePath(Workspace.Location, fullPath));
+        DynValue fn = s.LoadFile(fullPath, null, friendlyName);
         s.SetCwd(Path.GetDirectoryName(fullPath)!);
 
         var data = new TailCallData()
@@ -52,11 +71,11 @@ public class BorzModule
     {
         Script s = executionContext.GetScript();
         DynValue nameV = arguments.AsType(0, "project", DataType.String, false);
-        DynValue languageV = arguments.AsType(1, "project", DataType.UserData, false);
+        DynValue languageV = arguments.AsType(1, "project", DataType.String, false);
         DynValue typeV = arguments.AsType(2, "project", DataType.UserData, false);
 
         string name = nameV.String;
-        Language language = (Language)languageV.UserData.Object;
+        string language = languageV.String;
         BinType type = (BinType)typeV.UserData.Object;
 
         var project = Project.Create(s, name, type, language);

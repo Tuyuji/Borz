@@ -2,8 +2,11 @@ using System.Collections.Concurrent;
 using System.Reflection;
 using System.Runtime.InteropServices;
 using AkoSharp;
+using Borz.Core.Lua;
 using Borz.Core.Platform;
 using ByteSizeLib;
+using MoonSharp.Interpreter;
+using MoonSharp.Interpreter.Loaders;
 using QuickGraph;
 using QuickGraph.Algorithms.TopologicalSort;
 
@@ -18,6 +21,7 @@ public static class Borz
     public static BuildConfig BuildConfig = new();
 
     public static ConcurrentQueue<string> BuildLog = new();
+    public static Script Script;
 
     public static void Init()
     {
@@ -47,6 +51,23 @@ public static class Borz
         }
 
         ConfigChanged();
+
+
+        Project.Setup();
+        ((ScriptLoaderBase)Script.DefaultOptions.ScriptLoader).ModulePaths = new string[] { "./?", "./?.lua" };
+        ScriptRunner.RegisterTypes();
+        Script = ScriptRunner.CreateScript();
+
+        var userScripts = Path.Combine(configFolder, "scripts");
+        if (Directory.Exists(userScripts))
+        {
+            //load up main.lua
+            var mainLua = Path.Combine(userScripts, "main.lua");
+            if (File.Exists(mainLua))
+            {
+                Borz.RunScript(mainLua);
+            }
+        }
     }
 
     private static void LoadPlatformAssembly()
@@ -197,14 +218,35 @@ public static class Borz
         ParallelOptions.MaxDegreeOfParallelism = usableThreadCount;
     }
 
-    public static void RunScript(string location)
-    {
-        Workspace.Init(location);
-    }
-
     public static bool CompileWorkspace(bool justLog = false)
     {
         Core.Borz.UpdateMemInfo();
+
+        if (BuildConfig.TargetPlatform == Lua.Platform.WebAssembly)
+        {
+            var sdkDir = Config.Get("webasm", "sdk");
+            if (sdkDir == null)
+            {
+                MugiLog.Fatal("WebAssembly SDK directory not set in config.");
+                return false;
+            }
+
+            var sdkPath = Path.GetFullPath(sdkDir);
+            if (!Directory.Exists(sdkPath))
+            {
+                MugiLog.Fatal("WebAssembly SDK directory does not exist.");
+                return false;
+            }
+
+            var upstreamPath = Path.Combine(sdkPath, "upstream", "emscripten");
+
+            var envPathSep = ':';
+
+            //add sdk path to PATH
+            var path = Environment.GetEnvironmentVariable("PATH");
+            path += envPathSep + sdkPath + envPathSep + upstreamPath;
+            Environment.SetEnvironmentVariable("PATH", path);
+        }
 
         var graph = new AdjacencyGraph<Project, Edge<Project>>();
         graph.AddVertexRange(Workspace.Projects);
@@ -231,37 +273,92 @@ public static class Borz
 
         MugiLog.Info($"Config: {BuildConfig.Config}");
 
-        Workspace.CallPreCompileEvent();
+        Borz.CallPreCompileEvent();
 
         sortedProjects.ForEach(prj =>
         {
             MugiLog.Info("===========================================");
-            var builder = IBuilder.GetBuilder(prj);
+            var builder = BuildFactory.GetBuilder(prj.Language);
             builder.Build(prj, justLog);
         });
 
-        Workspace.CallPostCompileEvent();
+        Borz.CallPostCompileEvent();
 
         return true;
     }
 
-    public static bool CleanWorkspace()
+    public static bool CleanWorkspace(bool justLog = false)
     {
         Workspace.Projects.ForEach(prj =>
         {
             var intDir = prj.GetPathAbs(prj.IntermediateDirectory);
             var outDir = prj.GetPathAbs(prj.OutputDirectory);
             if (Directory.Exists(intDir))
-                Directory.Delete(intDir, true);
+                Delete(intDir, true, justLog);
             if (Directory.Exists(outDir))
-                Directory.Delete(outDir, true);
+                Delete(outDir, true, justLog);
         });
 
         return true;
     }
 
+    public static void Delete(string path, bool recursive, bool justLog = false)
+    {
+        if (justLog)
+        {
+            MugiLog.Info($"Deleting {path}...");
+            return;
+        }
+
+        Directory.Delete(path, recursive);
+    }
+
     public static void GenerateWorkspace(IGenerator generator)
     {
         generator.Generate();
+    }
+
+    public static void RunScript(string location)
+    {
+        var fullPath = Path.GetFullPath(location);
+        var dir = Path.GetDirectoryName(fullPath);
+
+        Borz.Script.SetCwd(dir!);
+        try
+        {
+            Script.DoFile(fullPath);
+        }
+        catch (Exception exception)
+        {
+            if (exception is InterpreterException runtimeError)
+            {
+                MugiLog.Fatal(runtimeError.DecoratedMessage);
+            }
+            else
+                MugiLog.Fatal(exception.Message);
+
+            MugiLog.Wait();
+            MugiLog.Shutdown();
+            //rethrow
+            throw;
+        }
+    }
+
+    public static void CallPreCompileEvent()
+    {
+        var preCompileCallback = Script.Globals["OnPreCompile"];
+        if (preCompileCallback is Closure pcd)
+        {
+            pcd.Call();
+        }
+    }
+
+    public static void CallPostCompileEvent()
+    {
+        var postCompileCallback = Script.Globals["OnPostCompile"];
+        if (postCompileCallback is Closure pcd)
+        {
+            pcd.Call();
+        }
     }
 }

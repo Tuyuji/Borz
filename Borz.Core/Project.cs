@@ -6,7 +6,7 @@ namespace Borz.Core;
 [MoonSharpUserData]
 public abstract class Project
 {
-    public static Dictionary<Language, Type> ProjectTypes = new();
+    public static Dictionary<string, Type> ProjectTypes = new();
 
     public static void Setup()
     {
@@ -26,7 +26,7 @@ public abstract class Project
     public string ProjectDirectory;
     public string Name;
     public BinType Type;
-    public Language Language;
+    public string Language;
     public string OutputName;
 
     public List<Project> Dependencies = new();
@@ -43,7 +43,7 @@ public abstract class Project
         return Utils.StandardReplace(OutputName).Replace("$NAME", Name);
     }
 
-    public Project(string name, BinType type, Language language, string directory = "", bool addToWorkspace = true)
+    public Project(string name, BinType type, string language, string directory = "", bool addToWorkspace = true)
     {
         if (directory == String.Empty)
             directory = Directory.GetCurrentDirectory();
@@ -70,7 +70,7 @@ public abstract class Project
             Workspace.Projects.Add(this);
     }
 
-    public static dynamic Create(Script script, string name, BinType type, Language language)
+    public static dynamic Create(Script script, string name, BinType type, string language)
     {
         var t = ProjectTypes[language];
         //we need to call a static method on the type called Create

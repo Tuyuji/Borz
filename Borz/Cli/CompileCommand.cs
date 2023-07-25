@@ -1,5 +1,6 @@
 using System.ComponentModel;
 using System.Diagnostics.CodeAnalysis;
+using Borz.Core;
 using Borz.Core.Lua;
 using Spectre.Console.Cli;
 
@@ -18,8 +19,8 @@ public class CompileCommand : Command<CompileCommand.Settings>
 
         [LocalDesc("Compile.Desc.Platform")]
         [CommandOption("-p|--platform")]
-        [DefaultValue(typeof(Platform), nameof(Platform.Unknown))]
-        public Platform Platform { get; init; }
+        [DefaultValue(typeof(Platform), Core.Lua.Platform.Unknown)]
+        public string Platform { get; init; }
 
         [CommandArgument(0, "[config]")] public string? Config { get; init; }
     }
@@ -28,7 +29,7 @@ public class CompileCommand : Command<CompileCommand.Settings>
     {
         Core.Borz.BuildConfig.Config = settings.Config ?? "debug";
         Core.Borz.BuildConfig.TargetPlatform = settings.Platform;
-        Core.Borz.RunScript(Directory.GetCurrentDirectory());
+        Workspace.Init(Directory.GetCurrentDirectory());
 
         return
             Core.Borz.CompileWorkspace(settings.JustLog)

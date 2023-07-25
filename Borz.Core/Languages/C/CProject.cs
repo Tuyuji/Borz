@@ -6,7 +6,7 @@ using MoonSharp.Interpreter;
 namespace Borz.Core.Languages.C;
 
 [MoonSharpUserData]
-[ProjectLanguage(Language.C)]
+[ProjectLanguage(Core.Language.C)]
 public class CProject : Project
 {
     public Dictionary<string, string?> Defines = new();
@@ -30,7 +30,8 @@ public class CProject : Project
     //If this is set to true, then the output binrary was created or updated.
     [MoonSharpHidden] public bool IsBuilt = false;
 
-    public CProject(string name, BinType type, string directory = "", Language language = Language.C) : base(name, type,
+    public CProject(string name, BinType type, string directory = "", string language = Core.Language.C) : base(name,
+        type,
         language, directory)
     {
         StdVersion = "11";

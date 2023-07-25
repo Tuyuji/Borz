@@ -1,12 +1,12 @@
 namespace Borz.Core;
 
 [BorzUserData]
-public enum Language : uint
+public static class Language
 {
-    Unknown = 0,
-    C = 1,
-    Cpp = 2,
-    CSharp = 3,
-    Java = 4,
-    D = 5,
+    public const string Unknown = "unknown";
+    public const string C = "c";
+    public const string Cpp = "cxx";
+    public const string CSharp = "csharp";
+    public const string Java = "java";
+    public const string D = "d";
 }

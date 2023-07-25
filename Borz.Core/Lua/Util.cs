@@ -1,6 +1,7 @@
 using System.IO.Compression;
 using System.Net;
 using System.Runtime.InteropServices;
+using AkoSharp;
 using MoonSharp.Interpreter;
 
 namespace Borz.Core.Lua;
@@ -23,6 +24,20 @@ public class Util
         }
     }
 
+    public static void copydir(Script script, string src, string dest)
+    {
+        string srcAbs = script.GetAbsolute(src);
+        string destAbs = script.GetAbsolute(dest);
+
+        if (!Directory.Exists(srcAbs))
+            throw new Exception($"Source directory {srcAbs} does not exist.");
+
+        if (!Directory.Exists(destAbs))
+            Directory.CreateDirectory(destAbs);
+
+        CopyFilesRecursively(srcAbs, destAbs);
+    }
+
     public static void sleep(uint ms)
     {
         System.Threading.Thread.Sleep((int)ms);
@@ -36,15 +51,7 @@ public class Util
         return tuple;
     }
 
-    [Obsolete("Use BuildConfig.HostPlatform or Util.getHostPlatform instead.")]
-    public static Platform getPlatform()
-    {
-        Log.warning(
-            "You are using Util.getPlatform() which is deprecated. Use BuildConfig.HostPlatform or Util.getHostPlatform instead.");
-        return getHostPlatform();
-    }
-
-    public static Platform getHostPlatform()
+    public static string getHostPlatform()
     {
         if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
         {
@@ -224,5 +231,27 @@ public class Util
         {
             return false;
         }
+    }
+
+    public static void conf_add(string[] keys, string value)
+    {
+        var table = Borz.Config.GetLayer(ConfLevel.Script);
+        if (table == null)
+        {
+            throw new Exception($"Could not find table {string.Join(".", keys[0..^1])}");
+        }
+
+        AkoVar curTable = table;
+        for (int i = 0; i < keys.Length - 1; i++)
+        {
+            if (!curTable.ContainsKey(keys[i]))
+            {
+                curTable[keys[i]] = new AkoVar(AkoVar.VarType.TABLE);
+            }
+
+            curTable = curTable[keys[i]];
+        }
+
+        curTable.TableValue.TryAdd(keys[^1], new AkoVar(AkoVar.VarType.STRING) { Value = value });
     }
 }

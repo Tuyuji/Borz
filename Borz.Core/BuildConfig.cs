@@ -1,3 +1,4 @@
+using Borz.Core;
 using Borz.Core.Lua;
 using MoonSharp.Interpreter;
 
@@ -8,7 +9,7 @@ public class BuildConfig
 {
     //Debug, Release....
     private string _config = "debug";
-    private Platform _targetPlatform = Platform.Unknown;
+    private string _targetPlatform = "host";
 
     public string Config
     {
@@ -16,13 +17,15 @@ public class BuildConfig
         set => _config = value.ToLower();
     }
 
-    public Platform TargetPlatform
+    public string TargetPlatform
     {
         get => _targetPlatform;
         set => _targetPlatform = value;
     }
 
-    public Platform HostPlatform => Util.getHostPlatform();
+    public PlatformInfo TargetInfo => Platform.GetInfo(Core.Borz.BuildConfig.TargetPlatform);
+
+    public string HostPlatform => Util.getHostPlatform();
 
     public bool ConfigEquals(string config)
     {

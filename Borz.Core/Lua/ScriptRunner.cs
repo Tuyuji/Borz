@@ -36,6 +36,7 @@ public static class ScriptRunner
         script.Globals["pkgconf"] = typeof(LuaPkgConf);
         script.Globals["BuildConf"] = Borz.BuildConfig;
         script.Globals["ws"] = Workspace.Settings;
+        script.Globals["PlatformInfo"] = typeof(PlatformInfo);
 
 
         var types = typeof(Project).Assembly.GetTypes();
