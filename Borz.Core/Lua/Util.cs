@@ -51,6 +51,7 @@ public class Util
         return tuple;
     }
 
+    [Obsolete("This is gonna be moved/handled better.")]
     public static string getHostPlatform()
     {
         if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))

@@ -32,7 +32,13 @@ public static class Workspace
             string.IsNullOrEmpty(Borz.BuildConfig.TargetPlatform))
             Borz.BuildConfig.TargetPlatform = Borz.BuildConfig.HostPlatform;
 
-        var borzFile = Path.GetFullPath("build.borz");
+        var borzFile = Utils.GetBorzScriptFilePath(Location);
+        if (borzFile == null)
+        {
+            MugiLog.Error($"No borz script found in {Location}, need build.borz or borz.lua in root directory");
+            return;
+        }
+
         ExecutedBorzFiles.Add(borzFile);
         Borz.RunScript(borzFile);
     }

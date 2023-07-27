@@ -47,4 +47,18 @@ public static class Utils
                 throw new ArgumentOutOfRangeException(nameof(type), type, null);
         }
     }
+
+    public static string? GetBorzScriptFilePath(string directory)
+    {
+        //See if directory has build.borz first then borz.lua
+        var borzFile = Path.Combine(directory, "build.borz");
+        if (!File.Exists(borzFile))
+        {
+            borzFile = Path.Combine(directory, "borz.lua");
+            if (!File.Exists(borzFile))
+                return null;
+        }
+
+        return borzFile;
+    }
 }

@@ -19,21 +19,20 @@ public class BorzModule
         var attribs = File.GetAttributes(fullPath);
         if (attribs.HasFlag(FileAttributes.Directory))
         {
-            var buildBorz = Path.Combine(fullPath, "build.borz");
-            var mainLua = Path.Combine(fullPath, "main.lua");
-            if (File.Exists(buildBorz))
+            var buildBorz = Utils.GetBorzScriptFilePath(fullPath);
+            if (buildBorz == null)
             {
-                fullPath = buildBorz;
-            }
-            else if (File.Exists(mainLua))
-            {
+                var mainLua = Path.Combine(fullPath, "main.lua");
                 fullPath = mainLua;
+                if (!File.Exists(mainLua))
+                    throw new Exception($"Could not find files main.lua, build.borz, borz.lua in directory {fullPath}");
             }
             else
             {
-                throw new FileNotFoundException($"Could not find build.borz or main.lua in {fullPath}");
+                fullPath = buildBorz;
             }
         }
+
 
         string friendlyName = Path.GetFileName(fullPath);
         if (Workspace.ExecutedBorzFiles.Count != 0)
