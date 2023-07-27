@@ -52,7 +52,6 @@ public static class Borz
 
         ConfigChanged();
 
-
         Project.Setup();
         ((ScriptLoaderBase)Script.DefaultOptions.ScriptLoader).ModulePaths = new string[] { "./?", "./?.lua" };
         ScriptRunner.RegisterTypes();

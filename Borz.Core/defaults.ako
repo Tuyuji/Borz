@@ -17,6 +17,62 @@ linux64.windows.cxx "x86_64-w64-mingw32-g++"
 linux64.wasm.c "emcc"
 linux64.wasm.cxx "em++"
 
+#Platform info
+platform.info [
+    linux [
+        exe.prefix ""
+        exe.suffix ""
+        
+        sharedlib.prefix "lib"
+        sharedlib.suffix ".so"
+        
+        staticlib.prefix "lib"
+        staticlib.suffix ".a"
+    ]
+    
+    android [
+        exe.prefix ""
+        exe.suffix ""
+        
+        sharedlib.prefix "lib"
+        sharedlib.suffix ".so"
+        
+        staticlib.prefix "lib"
+        staticlib.suffix ".a"
+    ]
+    
+    macos [
+        exe.prefix ""
+        exe.suffix ""
+        
+        sharedlib.prefix "lib"
+        sharedlib.suffix ".dylib"
+        
+        staticlib.prefix "lib"
+        staticlib.suffix ".a"
+    ]
+    
+    ios [
+        exe.prefix ""
+        exe.suffix ""
+        
+        sharedlib.prefix "lib"
+        sharedlib.suffix ".dylib"
+        
+        staticlib.prefix "lib"
+        staticlib.suffix ".a"
+    ]
+    
+    windows [
+        exe.prefix ""
+        exe.suffix ".exe"
+        sharedlib.prefix ""
+        sharedlib.suffix ".dll"
+        staticlib.prefix ""
+        staticlib.suffix ".lib"
+    ]
+]
+
 #Not setting this to true for default since
 #I don't know if GCC will error out if its not found.
 #TODO: Have a check if mold exists and prefer it if it does.
