@@ -9,35 +9,6 @@ namespace Borz.Core.Lua;
 [MoonSharpUserData]
 public class Util
 {
-    //private static Dictionary<Guid, ConsoleHandler.ConsoleStatHandle> _statHandles = new();
-
-    //Sometimes things you download might have some screwy time stamps
-    //so this will help you fix them.
-    public static void recursiveFixModifyTimes(Script script, string directory)
-    {
-        string absPath = script.GetAbsolute(directory);
-        //Recursive all the way down
-        string[] files = Directory.GetFiles(absPath, "*", SearchOption.AllDirectories);
-        foreach (var file in files)
-        {
-            File.SetLastWriteTimeUtc(file, DateTime.UtcNow);
-        }
-    }
-
-    public static void copydir(Script script, string src, string dest)
-    {
-        string srcAbs = script.GetAbsolute(src);
-        string destAbs = script.GetAbsolute(dest);
-
-        if (!Directory.Exists(srcAbs))
-            throw new Exception($"Source directory {srcAbs} does not exist.");
-
-        if (!Directory.Exists(destAbs))
-            Directory.CreateDirectory(destAbs);
-
-        CopyFilesRecursively(srcAbs, destAbs);
-    }
-
     public static void sleep(uint ms)
     {
         System.Threading.Thread.Sleep((int)ms);
@@ -201,7 +172,8 @@ public class Util
 
     //https://stackoverflow.com/a/3822913
     //TODO: Handle links
-    private static void CopyFilesRecursively(string sourcePath, string targetPath)
+    [MoonSharpHidden]
+    public static void CopyFilesRecursively(string sourcePath, string targetPath)
     {
         if (!Directory.Exists(targetPath))
             Directory.CreateDirectory(targetPath);

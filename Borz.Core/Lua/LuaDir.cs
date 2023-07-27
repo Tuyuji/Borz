@@ -34,4 +34,31 @@ public class LuaDir
     {
         return Directory.GetDirectories(script.GetCwd());
     }
+
+    public static void copy(Script script, string src, string dest)
+    {
+        string srcAbs = script.GetAbsolute(src);
+        string destAbs = script.GetAbsolute(dest);
+
+        if (!Directory.Exists(srcAbs))
+            throw new Exception($"Source directory {srcAbs} does not exist.");
+
+        if (!Directory.Exists(destAbs))
+            Directory.CreateDirectory(destAbs);
+
+        Util.CopyFilesRecursively(srcAbs, destAbs);
+    }
+
+    //Sometimes things you download might have some screwy time stamps
+    //so this will help you fix them.
+    public static void recursiveFixModifyTimes(Script script, string directory)
+    {
+        string absPath = script.GetAbsolute(directory);
+        //Recursive all the way down
+        string[] files = Directory.GetFiles(absPath, "*", SearchOption.AllDirectories);
+        foreach (var file in files)
+        {
+            File.SetLastWriteTimeUtc(file, DateTime.UtcNow);
+        }
+    }
 }
