@@ -9,7 +9,7 @@ public class BuildConfig
 {
     //Debug, Release....
     private string _config = "debug";
-    private string _targetPlatform = "host";
+    private string _targetPlatform = Platform.Unknown;
 
     public string Config
     {
