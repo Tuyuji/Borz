@@ -21,6 +21,7 @@ public class CProject : Project
     public string PchSource = "";
     public string PchHeader = "";
     public bool StaticStdLib = false;
+    public bool GenerateRPaths = true;
 
     //Version number for the C or Cpp standard to use.
     //If set to none, then no standard will be used.
@@ -494,6 +495,11 @@ public class CProject : Project
 
     public string[] GetRPaths(string outputDir)
     {
+        if (!GenerateRPaths)
+        {
+            return Array.Empty<string>();
+        }
+
         //needs to be relative to the output dir
         List<string> paths = new();
         foreach (var dep in PkgDeps)
