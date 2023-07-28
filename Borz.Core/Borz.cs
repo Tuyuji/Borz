@@ -116,6 +116,10 @@ public static class Borz
     public static void Shutdown()
     {
         MugiLog.Shutdown();
+
+        var shouldWriteBuildLog = Config.Get("debug", "write_log_to_temp");
+        if (shouldWriteBuildLog != true) return;
+
         //write build log to /tmp/borz-build.log
         //if a build log already exists, append to it
         var buildLogPath = Path.Combine(Path.GetTempPath(), "borz-build.log");

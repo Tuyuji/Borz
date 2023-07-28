@@ -96,3 +96,10 @@ builder.cpp.compileCmds-
 #Prefer a single compile_commands.json in the workspace folder than
 #one in every project folder.
 builder.cpp.combineCmds+
+
+#DEBUG
+#This will write to a single file in your temp directory
+#If your on linux your tmp dir is prob a ram disk so this isnt
+#a big deal and helps out a lot when you get a bad compile
+#and dont know why 
+debug.write_log_to_temp+
