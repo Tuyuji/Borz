@@ -1,3 +1,4 @@
+using System.Collections.Concurrent;
 using System.Diagnostics;
 using AkoSharp;
 using Newtonsoft.Json;
@@ -317,7 +318,7 @@ public class CppBuilder : IBuilder
 
     private List<string> CompileSourceFiles(CProject project, ICCompiler compiler, List<string> sourceFilesToCompile)
     {
-        List<string> objects = new List<string>();
+        ConcurrentQueue<string> objects = new();
         int totalFiles = sourceFilesToCompile.Count;
         var objForBuild = Parallel.For(0, sourceFilesToCompile.Count, Borz.ParallelOptions, i =>
         {
@@ -359,12 +360,12 @@ public class CppBuilder : IBuilder
                 }
             }
 
-            objects.Add(objFilePath);
+            objects.Enqueue(objFilePath);
         });
 
         if (!objForBuild.IsCompleted)
             MugiLog.Fatal("Shouldn't happen");
-        return objects;
+        return objects.ToList();
     }
 
     private void LinkProject(CProject project, ICCompiler linker, List<string> objects)
