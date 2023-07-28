@@ -110,6 +110,8 @@ public abstract class CcCompiler : ICCompiler
         cmdArgs.Add("-o");
         cmdArgs.Add(outputPath);
 
+        AddStdVersion(project, ref cmdArgs);
+
         cmdArgs.AddRange(objects);
 
         foreach (var rpath in project.GetRPaths(unknownProject.GetPathAbs(unknownProject.OutputDirectory)))
@@ -237,6 +239,12 @@ public abstract class CcCompiler : ICCompiler
 
     public void AddStdVersion(CProject project, ref List<string> args)
     {
+        if (project.StdVersion == "none")
+        {
+            args.Add("-nostdlib");
+            return;
+        }
+
         if (project.StdVersion != String.Empty)
         {
             if (project.StdVersion.All(char.IsDigit))
@@ -249,8 +257,6 @@ public abstract class CcCompiler : ICCompiler
                 args.Add($"-std=" + project.StdVersion);
             }
         }
-        else if (project.StdVersion == "none")
-            args.Add("-nostdlib");
     }
 
     public void AddStaticStd(CProject project, ref List<string> args)
