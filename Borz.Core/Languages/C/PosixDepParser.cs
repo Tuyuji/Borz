@@ -5,7 +5,7 @@ public class PosixDepParser
     public static Dictionary<string, List<string>> Parse(string src)
     {
         var dependencies = new Dictionary<string, List<string>>();
-        string currentTarget = "";
+        var currentTarget = "";
 
         string[] lines = src.Split('\n');
 

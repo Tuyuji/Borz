@@ -11,7 +11,7 @@ public class Util
 {
     public static void sleep(uint ms)
     {
-        System.Threading.Thread.Sleep((int)ms);
+        Thread.Sleep((int)ms);
     }
 
     public static DynValue runCmd(Script script, string cmd, string args)
@@ -25,20 +25,11 @@ public class Util
     [Obsolete("This is gonna be moved/handled better.")]
     public static string getHostPlatform()
     {
-        if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
-        {
-            return Platform.Linux;
-        }
+        if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux)) return Platform.Linux;
 
-        if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
-        {
-            return Platform.MacOS;
-        }
+        if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX)) return Platform.MacOS;
 
-        if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
-        {
-            return Platform.Windows;
-        }
+        if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows)) return Platform.Windows;
 
         return Platform.Unknown;
     }
@@ -46,7 +37,7 @@ public class Util
     [BorzUserData]
     public enum ResourceType : uint
     {
-        Archive = 0,
+        Archive = 0
     }
 
     /// <summary>
@@ -69,25 +60,22 @@ public class Util
             return false;
 
         if (string.IsNullOrWhiteSpace(extractTo))
-        {
             throw ScriptRuntimeException.BadArgument(2, "GetResource", "extractTo is empty.");
-        }
 
         extractTo = Path.Combine(script.GetCwd(), extractTo);
 
-        Uri uri = new Uri(url);
+        var uri = new Uri(url);
         var filename = uri.LocalPath.Split('/').Last();
 
-        string borzTemp = Path.Combine(Path.GetTempPath(), "borz");
+        var borzTemp = Path.Combine(Path.GetTempPath(), "borz");
         if (!Directory.Exists(borzTemp))
             Directory.CreateDirectory(borzTemp);
 
-        string outputLocation = Path.Combine(borzTemp, filename);
+        var outputLocation = Path.Combine(borzTemp, filename);
 
         // using (var dlStat = ConsoleHandler.AddStatus("Downloading " + filename))
         // {
         if (!File.Exists(outputLocation))
-        {
             //Doesnt exist, download the resource
             try
             {
@@ -99,11 +87,10 @@ public class Util
             {
                 return false;
             }
-        }
         // }
 
         //Got the file, now extract it
-        string exDir = Path.Combine(Path.GetTempPath(), "borz-" + Path.GetRandomFileName());
+        var exDir = Path.Combine(Path.GetTempPath(), "borz-" + Path.GetRandomFileName());
         Directory.CreateDirectory(exDir);
 
         if (resourceType != ResourceType.Archive)
@@ -138,7 +125,7 @@ public class Util
             }
         }
 
-        string folderToCopy = string.Empty;
+        var folderToCopy = string.Empty;
 
         //Find the folder to copy
         folderToCopy = folderToExtract == "" ? exDir : Path.Combine(exDir, folderToExtract);
@@ -148,19 +135,13 @@ public class Util
 
         //Copy all files and folders to extractTo
         foreach (var file in files)
-        {
             //See if file is a directory or file
             if (Directory.Exists(file))
-            {
                 //Its a directory, copy it
                 CopyFilesRecursively(file, Path.Combine(extractTo, Path.GetFileName(file)));
-            }
             else
-            {
                 //Its a file, copy it
                 File.Copy(file, Path.Combine(extractTo, Path.GetFileName(file)));
-            }
-        }
 
         //Clean up
         Directory.Delete(exDir, true);
@@ -179,16 +160,12 @@ public class Util
             Directory.CreateDirectory(targetPath);
 
         //Now Create all of the directories
-        foreach (string dirPath in Directory.GetDirectories(sourcePath, "*", SearchOption.AllDirectories))
-        {
+        foreach (var dirPath in Directory.GetDirectories(sourcePath, "*", SearchOption.AllDirectories))
             Directory.CreateDirectory(dirPath.Replace(sourcePath, targetPath));
-        }
 
         //Copy all the files & Replaces any files with the same name
-        foreach (string newPath in Directory.GetFiles(sourcePath, "*.*", SearchOption.AllDirectories))
-        {
+        foreach (var newPath in Directory.GetFiles(sourcePath, "*.*", SearchOption.AllDirectories))
             File.Copy(newPath, newPath.Replace(sourcePath, targetPath), true);
-        }
     }
 
     public static bool downloadFile(Script script, string url, string outputLocation)
@@ -209,22 +186,22 @@ public class Util
     public static void conf_add(string[] keys, string value)
     {
         var table = Borz.Config.GetLayer(ConfLevel.Script);
-        if (table == null)
-        {
-            throw new Exception($"Could not find table {string.Join(".", keys[0..^1])}");
-        }
+        if (table == null) throw new Exception($"Could not find table {string.Join(".", keys[0..^1])}");
 
-        AkoVar curTable = table;
-        for (int i = 0; i < keys.Length - 1; i++)
+        var curTable = table;
+        for (var i = 0; i < keys.Length - 1; i++)
         {
-            if (!curTable.ContainsKey(keys[i]))
-            {
-                curTable[keys[i]] = new AkoVar(AkoVar.VarType.TABLE);
-            }
+            if (!curTable.ContainsKey(keys[i])) curTable[keys[i]] = new AkoVar(AkoVar.VarType.TABLE);
 
             curTable = curTable[keys[i]];
         }
 
         curTable.TableValue.TryAdd(keys[^1], new AkoVar(AkoVar.VarType.STRING) { Value = value });
+    }
+
+    public static string? conf_get(params string[] keys)
+    {
+        var value = Borz.Config.Get(keys);
+        return value == null ? null : (string?)value.Value.ToString();
     }
 }

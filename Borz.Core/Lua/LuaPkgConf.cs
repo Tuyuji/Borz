@@ -10,7 +10,7 @@ public static class LuaPkgConf
 {
     private static KeyValuePair<VersionType, string> ConvertVersionStringToPair(string input)
     {
-        VersionType versionOp = VersionType.None;
+        var versionOp = VersionType.None;
         input = input.Replace(" ", null);
         if (input.StartsWith(">="))
         {
@@ -38,7 +38,6 @@ public static class LuaPkgConf
         var includePaths = new List<string>();
         var defines = new Dictionary<string, string?>();
         foreach (var flag in info.CFlags)
-        {
             if (flag.StartsWith("-L"))
             {
                 libPaths.Add(flag[2..]);
@@ -52,21 +51,14 @@ public static class LuaPkgConf
                 var define = flag[2..];
                 var split = define.Split('=');
                 if (split.Length == 2)
-                {
                     defines[split[0]] = split[1];
-                }
                 else
-                {
                     defines[split[0]] = null;
-                }
             }
-        }
 
         foreach (var lib in info.Libs)
-        {
             if (lib.StartsWith("-l"))
                 libs.Add(lib[2..]);
-        }
 
 
         return new PkgDep(libs.ToArray(), libPaths.ToArray(), defines, includePaths.ToArray(), false);
@@ -77,10 +69,7 @@ public static class LuaPkgConf
         var (versionOp, version) = ConvertVersionStringToPair(versionIn);
 
         var pkg = PkgConfig.PkgConfig.GetPackage(name, versionOp, version);
-        if (pkg == null && required)
-        {
-            throw new PackageNotFoundException(name, versionOp, version);
-        }
+        if (pkg == null && required) throw new PackageNotFoundException(name, versionOp, version);
 
         return pkg == null ? null : ConvertPkgConfigInfoToPkgDep(pkg);
     }
@@ -99,8 +88,8 @@ public static class LuaPkgConf
             if (value.ContainsKey("name") && value["name"] != null)
                 pkgName = (string)value["name"];
 
-            VersionType versionOp = VersionType.None;
-            string version = "";
+            var versionOp = VersionType.None;
+            var version = "";
             if (value.ContainsKey("version"))
             {
                 var (op, ver) = ConvertVersionStringToPair((string)value["version"]);
@@ -113,10 +102,7 @@ public static class LuaPkgConf
                 isRequired = (bool)value["req"];
 
             var pkg = PkgConfig.PkgConfig.GetPackage(pkgName, versionOp, version);
-            if (pkg == null && isRequired)
-            {
-                throw new PackageNotFoundException(pkgName, versionOp, version);
-            }
+            if (pkg == null && isRequired) throw new PackageNotFoundException(pkgName, versionOp, version);
 
             dict.Add(key, pkg == null ? null : ConvertPkgConfigInfoToPkgDep(pkg));
         }
@@ -129,7 +115,7 @@ public sealed class PackageNotFoundException : Exception
 {
     public static string GetMessage(string pkgName, VersionType type, string version)
     {
-        string str = $"Required package {pkgName} not found";
+        var str = $"Required package {pkgName} not found";
         if (type != VersionType.None)
         {
             str += $", with version {version}";

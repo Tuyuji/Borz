@@ -188,31 +188,19 @@ public class CProject : Project
     public void pubDep(Script script, DynValue dep)
     {
         if (dep.Type == DataType.Table)
-        {
             foreach (var v in dep.Table.Values)
-            {
                 LuaAddDep(v, true);
-            }
-        }
         else
-        {
             LuaAddDep(dep, true);
-        }
     }
 
     public void privDep(Script script, DynValue dep)
     {
         if (dep.Type == DataType.Table)
-        {
             foreach (var v in dep.Table.Values)
-            {
                 LuaAddDep(v, false);
-            }
-        }
         else
-        {
             LuaAddDep(dep, false);
-        }
     }
 
     #endregion
@@ -250,16 +238,10 @@ public class CProject : Project
     public void define(Script script, DynValue def)
     {
         if (def.Type == DataType.Table)
-        {
             foreach (var v in def.Table.Values)
-            {
                 LuaAddDefine(v);
-            }
-        }
         else
-        {
             LuaAddDefine(def);
-        }
     }
 
     #endregion
@@ -358,10 +340,7 @@ public class CProject : Project
 
     public void AddIncludePaths(string[] paths, bool isPublic = true)
     {
-        foreach (string s in paths)
-        {
-            AddIncludePath(s, isPublic);
-        }
+        foreach (var s in paths) AddIncludePath(s, isPublic);
     }
 
     public void AddLink(string name)
@@ -374,23 +353,17 @@ public class CProject : Project
 
     public void AddLinks(string[] names)
     {
-        foreach (string s in names)
-        {
-            AddLink(s);
-        }
+        foreach (var s in names) AddLink(s);
     }
 
     public void AddSourceGlob(string match)
     {
-        Matcher matcher = new Matcher();
+        var matcher = new Matcher();
         matcher.AddInclude(match);
 
         var result = matcher.Execute(new DirectoryInfoWrapper(new DirectoryInfo(ProjectDirectory)));
         if (!result.HasMatches) return;
-        foreach (var file in result.Files)
-        {
-            SourceFiles.Add(file.Path);
-        }
+        foreach (var file in result.Files) SourceFiles.Add(file.Path);
     }
 
     public void AddSourceFile(string path)
@@ -403,10 +376,7 @@ public class CProject : Project
 
     public void AddSourceFiles(string[] paths)
     {
-        foreach (string s in paths)
-        {
-            AddSourceFile(s);
-        }
+        foreach (var s in paths) AddSourceFile(s);
     }
 
     #region Compiler Api
@@ -418,22 +388,12 @@ public class CProject : Project
         List<string> paths = new();
         paths.AddRange(PublicIncludePaths);
         paths.AddRange(PrivateIncludePaths);
-        foreach (var dep in PkgDeps)
-        {
-            paths.AddRange(dep.Key.Includes);
-        }
+        foreach (var dep in PkgDeps) paths.AddRange(dep.Key.Includes);
 
         foreach (var dependency in Dependencies)
-        {
             if (dependency is CppProject cppProject)
-            {
                 paths.AddRange(cppProject.GetPublicIncludePaths());
-            }
-            else if (dependency is CProject cProject)
-            {
-                paths.AddRange(cProject.GetPublicIncludePaths());
-            }
-        }
+            else if (dependency is CProject cProject) paths.AddRange(cProject.GetPublicIncludePaths());
 
         return paths.ToArray();
     }
@@ -444,22 +404,12 @@ public class CProject : Project
         paths.AddRange(GetPathsAbs(PublicIncludePaths.ToArray()));
 
         //Already absolute
-        foreach (var dep in PkgDeps.Where(dep => dep.Value))
-        {
-            paths.AddRange(dep.Key.Includes);
-        }
+        foreach (var dep in PkgDeps.Where(dep => dep.Value)) paths.AddRange(dep.Key.Includes);
 
         foreach (var dependency in Dependencies)
-        {
             if (dependency is CppProject cppProject)
-            {
                 paths.AddRange(cppProject.GetPublicIncludePaths());
-            }
-            else if (dependency is CProject cProject)
-            {
-                paths.AddRange(cProject.GetPublicIncludePaths());
-            }
-        }
+            else if (dependency is CProject cProject) paths.AddRange(cProject.GetPublicIncludePaths());
 
         return paths.ToArray();
     }
@@ -472,13 +422,9 @@ public class CProject : Project
             LibraryPaths.Select(e => Path.IsPathRooted(e) ? e : Path.Combine(ProjectDirectory, e)));
 
         //PkgDeps are absolute
-        foreach (var dep in PkgDeps)
-        {
-            paths.AddRange(dep.Key.LibDirs);
-        }
+        foreach (var dep in PkgDeps) paths.AddRange(dep.Key.LibDirs);
 
         foreach (var dependency in Dependencies)
-        {
             switch (dependency)
             {
                 case CppProject cppProject:
@@ -488,28 +434,21 @@ public class CProject : Project
                     paths.Add(cProject.GetPathAbs(cProject.OutputDirectory));
                     break;
             }
-        }
 
         return paths.ToArray();
     }
 
     public string[] GetRPaths(string outputDir)
     {
-        if (!GenerateRPaths)
-        {
-            return Array.Empty<string>();
-        }
+        if (!GenerateRPaths) return Array.Empty<string>();
 
         //needs to be relative to the output dir
         List<string> paths = new();
         foreach (var dep in PkgDeps)
-        {
             if (dep.Key.RequiresRpath)
                 paths.AddRange(dep.Key.LibDirs.Select(e => Path.GetRelativePath(outputDir, e)));
-        }
 
         foreach (var dependency in Dependencies)
-        {
             switch (dependency)
             {
                 case CppProject cppProject:
@@ -519,7 +458,6 @@ public class CProject : Project
                     paths.Add(Path.GetRelativePath(outputDir, cProject.GetPathAbs(cProject.OutputDirectory)));
                     break;
             }
-        }
 
         return paths.ToArray();
     }
@@ -528,10 +466,7 @@ public class CProject : Project
     {
         List<string> libs = new();
         libs.AddRange(Links);
-        foreach (var dep in PkgDeps)
-        {
-            libs.AddRange(dep.Key.Libs);
-        }
+        foreach (var dep in PkgDeps) libs.AddRange(dep.Key.Libs);
 
         foreach (var dependency in Dependencies)
         {
@@ -555,10 +490,7 @@ public class CProject : Project
         Dictionary<string, string?> defs =
             Defines.ToDictionary(valuePair => valuePair.Key, valuePair => valuePair.Value);
 
-        foreach (var valuePair in PkgDeps.SelectMany(dep => dep.Key.Defines))
-        {
-            defs.Add(valuePair.Key, valuePair.Value);
-        }
+        foreach (var valuePair in PkgDeps.SelectMany(dep => dep.Key.Defines)) defs.Add(valuePair.Key, valuePair.Value);
 
         return defs;
     }

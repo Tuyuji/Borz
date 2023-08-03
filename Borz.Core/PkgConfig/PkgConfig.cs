@@ -27,16 +27,12 @@ public static class PkgConfig
 
     public static bool DoesPkgExist(string name, VersionType op = VersionType.None, string version = "")
     {
-        string cmd = "--exists ";
+        var cmd = "--exists ";
 
         if (op != VersionType.None)
-        {
             cmd += $"\"{name} {GetPkgVersionFormat(op, version)}\"";
-        }
         else
-        {
             cmd += $"{name}";
-        }
 
         var result = RunPkgConfig(cmd);
         return result.Exitcode == 0;
@@ -47,10 +43,10 @@ public static class PkgConfig
         if (!DoesPkgExist(name, op, version))
             return null;
 
-        string nameVersion = "";
+        var nameVersion = "";
         nameVersion = op == VersionType.None ? name : $"\"{name} {GetPkgVersionFormat(op, version)}\"";
 
-        string modVersion = "";
+        var modVersion = "";
         {
             var versionOutput = RunPkgConfig($"--modversion {nameVersion}");
             if (versionOutput.Exitcode != 0)
@@ -58,7 +54,7 @@ public static class PkgConfig
             modVersion = versionOutput.Ouput;
         }
 
-        string libs = "";
+        var libs = "";
         {
             var libsOutput = RunPkgConfig($"--libs {nameVersion}");
             if (libsOutput.Exitcode != 0)
@@ -67,7 +63,7 @@ public static class PkgConfig
             libs = libs.Trim();
         }
 
-        string cflags = "";
+        var cflags = "";
         {
             var cflagsOutput = RunPkgConfig($"--cflags {nameVersion}");
             if (cflagsOutput.Exitcode != 0)

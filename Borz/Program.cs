@@ -4,7 +4,7 @@ using Spectre.Console.Cli;
 
 namespace Borz;
 
-static class Program
+internal static class Program
 {
     public static int Main(string[] args)
     {
@@ -22,7 +22,7 @@ static class Program
                 .WithAlias("g");
             config.AddBranch<ConfigSettings>("config", conf => { conf.AddCommand<ListConfigCommand>("list"); });
         });
-        int res = 1;
+        var res = 1;
         try
         {
             res = app.Run(args);

@@ -36,7 +36,10 @@ public abstract class Project
 
     public event EventHandler FinishedCompiling;
 
-    public void CallFinishedCompiling() => FinishedCompiling?.Invoke(this, EventArgs.Empty);
+    public void CallFinishedCompiling()
+    {
+        FinishedCompiling?.Invoke(this, EventArgs.Empty);
+    }
 
     public string GetOutputName()
     {
@@ -45,7 +48,7 @@ public abstract class Project
 
     public Project(string name, BinType type, string language, string directory = "", bool addToWorkspace = true)
     {
-        if (directory == String.Empty)
+        if (directory == string.Empty)
             directory = Directory.GetCurrentDirectory();
 
         OutputDirectory = Borz.Config.Get("paths", "output");
@@ -61,10 +64,10 @@ public abstract class Project
 
         OutputName = Borz.Config.Get("project", "output");
 
-        this.ProjectDirectory = directory;
-        this.Name = name;
-        this.Type = type;
-        this.Language = language;
+        ProjectDirectory = directory;
+        Name = name;
+        Type = type;
+        Language = language;
 
         if (addToWorkspace)
             Workspace.Projects.Add(this);
@@ -82,10 +85,7 @@ public abstract class Project
             throw new Exception("Create method on type " + t.Name + " returned null");
 
         var projectCallback = script.Globals["OnProjectCreate"];
-        if (projectCallback is Closure pcd)
-        {
-            pcd.Call(p);
-        }
+        if (projectCallback is Closure pcd) pcd.Call(p);
 
         return p;
     }
@@ -114,10 +114,7 @@ public abstract class Project
     public string[] GetPathsAbs(string[] paths)
     {
         var absPaths = new string[paths.Length];
-        for (int i = 0; i < paths.Length; i++)
-        {
-            absPaths[i] = GetPathAbs(paths[i]);
-        }
+        for (var i = 0; i < paths.Length; i++) absPaths[i] = GetPathAbs(paths[i]);
 
         return absPaths;
     }

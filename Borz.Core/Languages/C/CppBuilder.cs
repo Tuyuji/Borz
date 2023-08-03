@@ -7,22 +7,26 @@ namespace Borz.Core.Languages.C;
 
 public class CppBuilder : IBuilder
 {
+    public bool Simulate { get; set; } = false;
+
     private static void CheckFolder(string path)
     {
         if (!Directory.Exists(path))
             Directory.CreateDirectory(path);
     }
 
-    public bool Build(Project inProj, bool justLog)
+    public bool Build(Project inProj, bool simulate)
     {
-        CProject project = (CProject)inProj;
+        var project = (CProject)inProj;
         //make sure inProj is a CppProject or CProject
         if (!(inProj is CppProject || inProj is CProject))
-        {
             throw new Exception("Project is not a CppProject or CProject");
-        }
 
-        bool generateCompileCommands = ShouldGenerateCompileCommands();
+        //Just logging is just simulating a build
+        if (simulate)
+            Simulate = true;
+
+        var generateCompileCommands = ShouldGenerateCompileCommands();
         //see if we should combind this into the workspace compile_commands.json
         bool doWorkspaceCompileCommands = Borz.Config.Get("builder", "cpp", "combineCmds");
 
@@ -30,40 +34,39 @@ public class CppBuilder : IBuilder
         var linker = CreateLinker();
 
         if (!ValidateCompiler(compiler) || !ValidateLinker(linker))
-        {
             throw new Exception("Compiler or linker is invalid");
-        }
 
         compiler.GenerateSourceDependencies = true;
         compiler.GenerateCompileCommands = generateCompileCommands;
+        compiler.OnlyOutputCompileCommands = Simulate;
 
-        compiler.SetJustLog(justLog);
-        linker.SetJustLog(justLog);
+        compiler.SetJustLog(Simulate);
+        linker.SetJustLog(Simulate);
 
         MugiLog.Debug($"Using compiler: {compiler.GetFriendlyName()}");
         MugiLog.Debug($"Using linker: {linker.GetFriendlyName(true)}");
 
-        string outputDir = project.OutputDirectory;
-        string intDir = project.IntermediateDirectory;
+        var outputDir = project.OutputDirectory;
+        var intDir = project.IntermediateDirectory;
 
         CheckFolder(outputDir);
         CheckFolder(intDir);
 
-        List<string> objects = new List<string>();
+        List<string> objects = new();
 
-        Stopwatch stopwatch = new Stopwatch();
+        var stopwatch = new Stopwatch();
         MugiLog.Info("Compiling project: " + project.Name);
 
         long? compileTime = null;
 
-        bool pchCompiled = false;
+        var pchCompiled = false;
 
         if (!string.IsNullOrWhiteSpace(project.PchHeader))
         {
             //deal with pch
             //some compiler agnostic way to handle pch
             var pchObj = compiler.GetCompiledPchLocation(project);
-            bool shouldCompilePch = false;
+            var shouldCompilePch = false;
             if (File.Exists(pchObj))
             {
                 if (File.GetLastWriteTimeUtc(pchObj) < File.GetLastWriteTimeUtc(project.GetPathAbs(project.PchHeader)))
@@ -86,7 +89,7 @@ public class CppBuilder : IBuilder
                 shouldCompilePch = true;
             }
 
-            if (shouldCompilePch)
+            if (shouldCompilePch || Simulate)
             {
                 var res = compiler.CompilePch(project);
                 if (res.Exitcode != 0)
@@ -97,10 +100,8 @@ public class CppBuilder : IBuilder
                 }
 
                 if (!string.IsNullOrWhiteSpace(res.Error))
-                {
                     //Mostly warnings 
                     MugiLog.Warning($"Compiler output:\n{res.Error}");
-                }
 
                 pchCompiled = true;
             }
@@ -117,7 +118,7 @@ public class CppBuilder : IBuilder
         else
         {
             Borz.BuildLog.Enqueue($"Compiling source files for project: {project.Name}");
-            uint totalFiles = (uint)project.SourceFiles.Count;
+            var totalFiles = (uint)project.SourceFiles.Count;
             uint currentFile = 1;
             stopwatch.Restart();
 
@@ -128,23 +129,19 @@ public class CppBuilder : IBuilder
             stopwatch.Stop();
             compileTime = stopwatch.ElapsedMilliseconds;
             if (generateCompileCommands)
-            {
                 WriteCompileCommands(
                     doWorkspaceCompileCommands ? Workspace.Location : project.ProjectDirectory,
                     compiler.CompileCommands.ToArray());
-            }
         }
 
-        bool needToRelink = NeedRelink(project) || pchCompiled;
+        var needToRelink = NeedRelink(project) || pchCompiled || Simulate;
         if (!needToRelink)
-        {
             //If the binary doesn't exist, we need to link it
             if (!File.Exists(project.GetOutputFilePath()))
             {
                 MugiLog.Debug("Binary doesn't exist, need to relink.");
                 needToRelink = true;
             }
-        }
 
         if (needToRelink || sourceFilesToCompile.Count != 0)
         {
@@ -172,7 +169,11 @@ public class CppBuilder : IBuilder
     private List<string> GetSourceFilesToCompile(CProject project, ICCompiler compiler, ref List<string> objects,
         bool checkDeps = true)
     {
-        List<string> sourceFilesToCompile = new List<string>();
+        if (Simulate)
+            //If we're simulating, we need to compile everything
+            return project.SourceFiles;
+
+        List<string> sourceFilesToCompile = new();
 
         foreach (var sourceFile in project.SourceFiles)
         {
@@ -204,10 +205,9 @@ public class CppBuilder : IBuilder
                 continue;
             }
 
-            bool needsCompile = false;
+            var needsCompile = false;
 
             if (compiler.GetDependencies(project, objFileName, out var deps))
-            {
                 //See if any of the dependencies are newer than the object file.
                 foreach (var dep in deps)
                 {
@@ -219,7 +219,6 @@ public class CppBuilder : IBuilder
                         break;
                     }
                 }
-            }
 
             if (needsCompile)
             {
@@ -243,7 +242,7 @@ public class CppBuilder : IBuilder
         //But if it already exists, find files that are in our list and update them.
         //This is to avoid recompiling everything when we add a new file.
 
-        List<CompileCommand> jsonCommands = new List<CompileCommand>();
+        List<CompileCommand> jsonCommands = new();
 
         var compileCommandsPath = Path.Combine(outputLocation, "compile_commands.json");
         if (File.Exists(compileCommandsPath))
@@ -253,10 +252,7 @@ public class CppBuilder : IBuilder
             {
                 jsonCommands = json;
                 //remove all commands that are in our list.
-                foreach (var command in commands)
-                {
-                    jsonCommands.RemoveAll(c => c.File == command.File);
-                }
+                foreach (var command in commands) jsonCommands.RemoveAll(c => c.File == command.File);
             }
         }
 
@@ -309,31 +305,45 @@ public class CppBuilder : IBuilder
 
     private bool NeedRelink(CProject project)
     {
+        //CProjecst and CppProjects have IsBuilt set to true when we have compiled and linked them
+        //We can use this to see if we need to relink a project.
+        //If our project depends on a static lib that has been built, we need to relink.
+
+        var staticLibsHaveBeenBuilt = project.Dependencies.Any(dep =>
+        {
+            var depProj = dep as CProject;
+            if (depProj is { IsBuilt: true, Type: BinType.StaticLib }) return true;
+
+            return false;
+        });
+
+        if (staticLibsHaveBeenBuilt)
+            return true;
+
         return project.Dependencies.Any(dep =>
         {
-            CProject? depProj = dep as CProject;
-            return depProj is { IsBuilt: true, Type: BinType.StaticLib }; //
+            var depProj = dep as CProject;
+            if (depProj is null)
+                return false;
+            return depProj.IsBuilt && depProj.Type != BinType.StaticLib;
         });
     }
 
     private List<string> CompileSourceFiles(CProject project, ICCompiler compiler, List<string> sourceFilesToCompile)
     {
         ConcurrentQueue<string> objects = new();
-        int totalFiles = sourceFilesToCompile.Count;
+        var totalFiles = sourceFilesToCompile.Count;
         var objForBuild = Parallel.For(0, sourceFilesToCompile.Count, Borz.ParallelOptions, i =>
         {
             var sourceFile = project.GetPathAbs(sourceFilesToCompile[i]);
             //Dont care for headers.
-            if (sourceFile.EndsWith(".h"))
-            {
-                return;
-            }
+            if (sourceFile.EndsWith(".h")) return;
 
             MugiLog.Info($"[{i + 1}/{totalFiles}] Compiling {sourceFile}");
 
             var objFileName = Path.GetFileNameWithoutExtension(sourceFile) + ".o";
 
-            string objFilePath = Path.Combine(
+            var objFilePath = Path.Combine(
                 project.IntermediateDirectory,
                 objFileName);
 
@@ -341,9 +351,9 @@ public class CppBuilder : IBuilder
             var sourceFileLastWrite = File.GetLastWriteTime(sourceFile);
 
 
-            if (!File.Exists(objFilePath) | objFileLastWrite < sourceFileLastWrite)
+            if (!File.Exists(objFilePath) | (objFileLastWrite < sourceFileLastWrite))
             {
-                string sourceAbsolute = Path.Combine(project.ProjectDirectory, sourceFile);
+                var sourceAbsolute = Path.Combine(project.ProjectDirectory, sourceFile);
                 var result = compiler.CompileObject(project, sourceFile, objFilePath);
                 if (result.Exitcode != 0)
                 {
@@ -354,10 +364,8 @@ public class CppBuilder : IBuilder
                 }
 
                 if (result.Error.Length > 3)
-                {
                     //Some warning
                     MugiLog.Warning(result.Error);
-                }
             }
 
             objects.Enqueue(objFilePath);

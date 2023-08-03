@@ -16,6 +16,7 @@ public abstract class CcCompiler : ICCompiler
     public bool GenerateCompileCommands { get; set; }
 
     public ConcurrentBag<CppBuilder.CompileCommand> CompileCommands { get; } = new();
+    public bool OnlyOutputCompileCommands { get; set; } = false;
 
     public abstract string CCompilerElf { get; }
     public abstract string CppCompilerElf { get; }
@@ -60,12 +61,11 @@ public abstract class CcCompiler : ICCompiler
         cmdArgs.Add("-c");
         cmdArgs.Add(sourceFile);
 
-        bool useCpp = project.Language == Language.Cpp;
+        var useCpp = project.Language == Language.Cpp;
 
-        string compiler = sourceFile.EndsWith(".cpp") ? CppCompilerElf : CCompilerElf;
+        var compiler = sourceFile.EndsWith(".cpp") ? CppCompilerElf : CCompilerElf;
 
         if (GenerateCompileCommands)
-        {
             CompileCommands.Add(
                 new CppBuilder.CompileCommand()
                 {
@@ -75,7 +75,6 @@ public abstract class CcCompiler : ICCompiler
                     File = sourceFile,
                     Output = outputFile
                 });
-        }
 
         var res = Utils.RunCmd(compiler,
             Strings.Join(cmdArgs.ToArray())!, project.ProjectDirectory, JustLog);
@@ -87,19 +86,17 @@ public abstract class CcCompiler : ICCompiler
     {
         CProject project = null;
         if (unknownProject is not (CProject or CppProject))
-        {
             throw new Exception("Project is not a CppProject or CProject");
-        }
 
         project = unknownProject as CProject ?? throw new InvalidOperationException();
 
-        string outputPath = project.OutputDirectory;
-        string outputName = project.GetOutputName();
+        var outputPath = project.OutputDirectory;
+        var outputName = project.GetOutputName();
 
         if (project.Type == BinType.StaticLib)
         {
-            string output = Path.Combine(outputPath, $"lib{outputName}.a");
-            return Utils.RunCmd("ar", $"-rcs \"{output}\" " + String.Join(" ", objects.ToArray()),
+            var output = Path.Combine(outputPath, $"lib{outputName}.a");
+            return Utils.RunCmd("ar", $"-rcs \"{output}\" " + string.Join(" ", objects.ToArray()),
                 project.ProjectDirectory, JustLog);
         }
 
@@ -133,10 +130,7 @@ public abstract class CcCompiler : ICCompiler
         }
 
 
-        if (Borz.UseMold)
-        {
-            cmdArgs.Add("-fuse-ld=mold");
-        }
+        if (Borz.UseMold) cmdArgs.Add("-fuse-ld=mold");
 
         var res = Utils.RunCmd(project.Language == Language.C ? CCompilerElf : CppCompilerElf,
             Strings.Join(cmdArgs.ToArray())!, project.ProjectDirectory, JustLog);
@@ -178,10 +172,7 @@ public abstract class CcCompiler : ICCompiler
 
     public string GetFriendlyName(bool asLinker)
     {
-        if (Borz.UseMold && asLinker)
-        {
-            return GetFriendlyName() + " w/ Mold";
-        }
+        if (Borz.UseMold && asLinker) return GetFriendlyName() + " w/ Mold";
 
         return GetFriendlyName();
     }
@@ -245,17 +236,13 @@ public abstract class CcCompiler : ICCompiler
             return;
         }
 
-        if (project.StdVersion != String.Empty)
+        if (project.StdVersion != string.Empty)
         {
             if (project.StdVersion.All(char.IsDigit))
-            {
                 args.Add($"-std=" + (project is CppProject ? "c++" : "c") + project.StdVersion);
-            }
             else
-            {
                 //just pass what ever they put in
                 args.Add($"-std=" + project.StdVersion);
-            }
         }
     }
 
@@ -274,10 +261,7 @@ public abstract class CcCompiler : ICCompiler
 
     public void AddPic(CProject project, ref List<string> args)
     {
-        if (project.UsePIC)
-        {
-            args.Add("-fPIC");
-        }
+        if (project.UsePIC) args.Add("-fPIC");
     }
 
     public void AddDefines(CProject project, ref List<string> args)
@@ -285,37 +269,24 @@ public abstract class CcCompiler : ICCompiler
         var platformInfo = Borz.BuildConfig.TargetInfo;
         if (platformInfo.Defines != null)
             foreach (var define in platformInfo.Defines)
-            {
                 args.Add(define.Value == null ? $"-D{define.Key}" : $"-D{define.Key}={define.Value}");
-            }
 
         foreach (var define in project.GetDefines())
-        {
             args.Add(define.Value == null ? $"-D{define.Key}" : $"-D{define.Key}={define.Value}");
-        }
     }
 
     public void AddIncludes(CProject project, ref List<string> args)
     {
-        foreach (var include in project.GetIncludePaths())
-        {
-            args.Add($"-I{include}");
-        }
+        foreach (var include in project.GetIncludePaths()) args.Add($"-I{include}");
     }
 
     public void AddLibraryPaths(CProject project, ref List<string> args)
     {
-        foreach (var libraryPath in project.GetLibraryPaths())
-        {
-            args.Add($"-L{libraryPath}");
-        }
+        foreach (var libraryPath in project.GetLibraryPaths()) args.Add($"-L{libraryPath}");
     }
 
     public void AddLibraries(CProject project, ref List<string> args)
     {
-        foreach (var library in project.GetLibraries())
-        {
-            args.Add($"-l{library}");
-        }
+        foreach (var library in project.GetLibraries()) args.Add($"-l{library}");
     }
 }

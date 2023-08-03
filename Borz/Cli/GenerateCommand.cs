@@ -44,10 +44,7 @@ public class GenerateCommand : Command<GenerateCommand.Settings>
         {
             Console.WriteLine(Lang.Generate_Error_UnknownGenerator, settings.Generator);
             Console.WriteLine(Lang.Generate_ListAvailableHeader);
-            foreach (var genName in genNames)
-            {
-                Console.WriteLine($@"  {genName}");
-            }
+            foreach (var genName in genNames) Console.WriteLine($@"  {genName}");
 
             return 1;
         }

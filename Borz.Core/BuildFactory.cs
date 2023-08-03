@@ -15,10 +15,7 @@ public class BuildFactory
 
     public static IBuilder GetBuilder(string language)
     {
-        if (_knownBuilders.TryGetValue(language, out var builder))
-        {
-            return builder;
-        }
+        if (_knownBuilders.TryGetValue(language, out var builder)) return builder;
 
         throw new Exception($"No builder found for language '{language}'");
     }

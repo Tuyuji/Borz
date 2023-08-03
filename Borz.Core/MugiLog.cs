@@ -13,7 +13,7 @@ public enum LogLevel
     Info = 1,
     Warning = 2,
     Error = 3,
-    Fatal = 4,
+    Fatal = 4
 }
 
 public static class MugiLog
@@ -56,10 +56,8 @@ public static class MugiLog
         //Find the largest log level string length
         var levelNames = Enum.GetNames<LogLevel>();
         foreach (var levelName in levelNames)
-        {
             if (levelName.Length > _levelMaxLength)
                 _levelMaxLength = (uint)levelName.Length;
-        }
 
         _consoleOut = consoleOut ?? Console.Out;
         _consoleErrOut = consoleErrOut ?? Console.Error;
@@ -143,13 +141,35 @@ public static class MugiLog
         _logWaitHandle.Set();
     }
 
-    public static void WriteLog(LogLevel level, string message) => LowLevelWrite(level, message);
+    public static void WriteLog(LogLevel level, string message)
+    {
+        LowLevelWrite(level, message);
+    }
 
-    public static void Debug(string message) => LowLevelWrite(LogLevel.Debug, message);
-    public static void Info(string message) => LowLevelWrite(LogLevel.Info, message);
-    public static void Warning(string message) => LowLevelWrite(LogLevel.Warning, message);
-    public static void Error(string message) => LowLevelWrite(LogLevel.Error, message);
-    public static void Fatal(string message) => LowLevelWrite(LogLevel.Fatal, message);
+    public static void Debug(string message)
+    {
+        LowLevelWrite(LogLevel.Debug, message);
+    }
+
+    public static void Info(string message)
+    {
+        LowLevelWrite(LogLevel.Info, message);
+    }
+
+    public static void Warning(string message)
+    {
+        LowLevelWrite(LogLevel.Warning, message);
+    }
+
+    public static void Error(string message)
+    {
+        LowLevelWrite(LogLevel.Error, message);
+    }
+
+    public static void Fatal(string message)
+    {
+        LowLevelWrite(LogLevel.Fatal, message);
+    }
 
 
     public static void Wait()

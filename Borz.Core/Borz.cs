@@ -42,13 +42,9 @@ public static class Borz
         SetupDefaults();
 
         if (File.Exists(configFile))
-        {
             Deserializer.FromString(Config.GetLayer(ConfLevel.UserGobal), File.ReadAllText(configFile));
-        }
         else
-        {
             File.WriteAllText(configFile, "# Borz Configuration File\ntemp;");
-        }
 
         ConfigChanged();
 
@@ -62,10 +58,7 @@ public static class Borz
         {
             //load up main.lua
             var mainLua = Path.Combine(userScripts, "main.lua");
-            if (File.Exists(mainLua))
-            {
-                Borz.RunScript(mainLua);
-            }
+            if (File.Exists(mainLua)) RunScript(mainLua);
         }
     }
 
@@ -73,21 +66,13 @@ public static class Borz
     {
         var dllName = "";
         if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
-        {
             dllName = "Borz.Linux";
-        }
         else if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
-        {
             dllName = "Borz.MacOS";
-        }
         else if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
-        {
             dllName = "Borz.Windows";
-        }
         else
-        {
             throw new Exception("Platform not supported");
-        }
 
         var dllFilename = $"{dllName}.dll";
         //Get the executables path
@@ -105,10 +90,10 @@ public static class Borz
 
         //Now get embedded resource called platform.ako and load it into the config
         var resourceName = $"{dllName}.platform.ako";
-        using (Stream stream = platAssembly.GetManifestResourceStream(resourceName))
-        using (StreamReader reader = new StreamReader(stream))
+        using (var stream = platAssembly.GetManifestResourceStream(resourceName))
+        using (var reader = new StreamReader(stream))
         {
-            string result = reader.ReadToEnd();
+            var result = reader.ReadToEnd();
             Deserializer.FromString(Config.GetLayer(ConfLevel.Platform), result);
         }
     }
@@ -142,7 +127,7 @@ public static class Borz
     {
         get
         {
-            bool use = false;
+            var use = false;
             var conf = Config.Get("linker", "mold");
             if (conf == true)
                 use = true;
@@ -154,10 +139,10 @@ public static class Borz
     {
         var assembly = Assembly.GetExecutingAssembly();
         var resourceName = "Borz.Core.defaults.ako";
-        using (Stream stream = assembly.GetManifestResourceStream(resourceName))
-        using (StreamReader reader = new StreamReader(stream))
+        using (var stream = assembly.GetManifestResourceStream(resourceName))
+        using (var reader = new StreamReader(stream))
         {
-            string result = reader.ReadToEnd();
+            var result = reader.ReadToEnd();
             Deserializer.FromString(Config.GetLayer(ConfLevel.Defaults), result);
         }
     }
@@ -166,11 +151,9 @@ public static class Borz
     {
         {
             var levelStr = Config.Get("log", "level");
-            LogLevel level = LogLevel.Info;
+            var level = LogLevel.Info;
             if (!Enum.TryParse(levelStr, true, out level))
-            {
                 MugiLog.Error("Failed to parse log level from config, defaulting to Info.");
-            }
 
             MugiLog.MinLevel = level;
         }
@@ -186,10 +169,8 @@ public static class Borz
 
         var maxReqThreads = (int)Config.Get("mt", "maxThreads");
         if (maxReqThreads == -1 || maxReqThreads == 0)
-        {
             //Use cpu max
             maxReqThreads = maxCpuCount;
-        }
 
         if (maxReqThreads > maxCpuCount)
         {
@@ -221,11 +202,11 @@ public static class Borz
         ParallelOptions.MaxDegreeOfParallelism = usableThreadCount;
     }
 
-    public static bool CompileWorkspace(bool justLog = false)
+    public static bool CompileWorkspace(bool simulate = false)
     {
-        Core.Borz.UpdateMemInfo();
+        UpdateMemInfo();
 
-        if (BuildConfig.TargetPlatform == Lua.Platform.WebAssembly)
+        if (BuildConfig.TargetPlatform == Lua.Platform.Wasm)
         {
             var sdkDir = Config.Get("webasm", "sdk");
             if (sdkDir == null)
@@ -254,12 +235,8 @@ public static class Borz
         var graph = new AdjacencyGraph<Project, Edge<Project>>();
         graph.AddVertexRange(Workspace.Projects);
         foreach (var project in Workspace.Projects)
-        {
-            foreach (var dependency in project.Dependencies)
-            {
-                graph.AddEdge(new Edge<Project>(dependency, project));
-            }
-        }
+        foreach (var dependency in project.Dependencies)
+            graph.AddEdge(new Edge<Project>(dependency, project));
 
         var algorithm = new TopologicalSortAlgorithm<Project, Edge<Project>>(graph);
         try
@@ -276,16 +253,16 @@ public static class Borz
 
         MugiLog.Info($"Config: {BuildConfig.Config}");
 
-        Borz.CallPreCompileEvent();
+        CallPreCompileEvent();
 
         sortedProjects.ForEach(prj =>
         {
             MugiLog.Info("===========================================");
             var builder = BuildFactory.GetBuilder(prj.Language);
-            builder.Build(prj, justLog);
+            builder.Build(prj, simulate);
         });
 
-        Borz.CallPostCompileEvent();
+        CallPostCompileEvent();
 
         return true;
     }
@@ -326,7 +303,7 @@ public static class Borz
         var fullPath = Path.GetFullPath(location);
         var dir = Path.GetDirectoryName(fullPath);
 
-        Borz.Script.SetCwd(dir!);
+        Script.SetCwd(dir!);
         try
         {
             Script.DoFile(fullPath);
@@ -334,9 +311,7 @@ public static class Borz
         catch (Exception exception)
         {
             if (exception is InterpreterException runtimeError)
-            {
                 MugiLog.Fatal(runtimeError.DecoratedMessage);
-            }
             else
                 MugiLog.Fatal(exception.Message);
 
@@ -350,18 +325,12 @@ public static class Borz
     public static void CallPreCompileEvent()
     {
         var preCompileCallback = Script.Globals["OnPreCompile"];
-        if (preCompileCallback is Closure pcd)
-        {
-            pcd.Call();
-        }
+        if (preCompileCallback is Closure pcd) pcd.Call();
     }
 
     public static void CallPostCompileEvent()
     {
         var postCompileCallback = Script.Globals["OnPostCompile"];
-        if (postCompileCallback is Closure pcd)
-        {
-            pcd.Call();
-        }
+        if (postCompileCallback is Closure pcd) pcd.Call();
     }
 }

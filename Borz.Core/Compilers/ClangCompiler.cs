@@ -5,7 +5,7 @@ namespace Borz.Core.Compilers;
 [ShortType("Clang")]
 public class ClangCompiler : CcCompiler
 {
-    public Version RequiredVersion = new Version(13, 0, 0);
+    public Version RequiredVersion = new(13, 0, 0);
 
     public override string CCompilerElf => "clang";
     public override string CppCompilerElf => "clang++";

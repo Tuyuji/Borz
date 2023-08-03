@@ -7,5 +7,5 @@ public enum BinType : uint
     ConsoleApp = 1,
     SharedObj = 2,
     StaticLib = 3,
-    WindowsApp = 4,
+    WindowsApp = 4
 }

@@ -34,11 +34,8 @@ public class RunCommand : Command<RunCommand.Settings>
         }
 
         //Well this is a bit hacky, but it works.
-        string exe = Path.Combine(proj.OutputDirectory, proj.Name);
-        if (OperatingSystem.IsWindows())
-        {
-            exe += ".exe";
-        }
+        var exe = Path.Combine(proj.OutputDirectory, proj.Name);
+        if (OperatingSystem.IsWindows()) exe += ".exe";
 
         if (!File.Exists(exe))
         {

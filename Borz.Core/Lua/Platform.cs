@@ -8,10 +8,11 @@ public static class Platform
 {
     public const string Android = "android";
     public const string Linux = "linux";
+    public const string Bsd = "Bsd";
     public const string iOS = "ios";
     public const string MacOS = "macos";
     public const string Windows = "windows";
-    public const string WebAssembly = "wasm";
+    public const string Wasm = "wasm";
     public const string Unknown = "unknown";
 
     private static ConcurrentDictionary<string, PlatformInfo> _knownPlatformInfos = new();
@@ -56,9 +57,6 @@ public static class Platform
 
     public static void RegisterPlatform(string platform, PlatformInfo info)
     {
-        if (!_knownPlatformInfos.TryAdd(platform, info))
-        {
-            throw new Exception($"Platform {platform} already registered");
-        }
+        if (!_knownPlatformInfos.TryAdd(platform, info)) throw new Exception($"Platform {platform} already registered");
     }
 }

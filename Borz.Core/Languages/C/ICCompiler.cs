@@ -11,6 +11,7 @@ public interface ICCompiler : ICompiler
     public bool GenerateCompileCommands { get; set; }
 
     public ConcurrentBag<CppBuilder.CompileCommand> CompileCommands { get; }
+    public bool OnlyOutputCompileCommands { get; set; }
 
     UnixUtil.RunOutput CompileObject(Project project, string sourceFile, string outputFile);
     UnixUtil.RunOutput LinkProject(Project project, string[] objects);

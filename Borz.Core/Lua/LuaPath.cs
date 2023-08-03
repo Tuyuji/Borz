@@ -67,5 +67,8 @@ public class LuaPath
         return result;
     }
 
-    public static string getAbs(Script script, string path) => getAbsolute(script, path);
+    public static string getAbs(Script script, string path)
+    {
+        return getAbsolute(script, path);
+    }
 }

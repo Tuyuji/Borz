@@ -12,7 +12,7 @@ public static class Utils
         Borz.BuildLog.Enqueue($"RunCmd: {command} {args}");
         if (!_justLog) return UnixUtil.RunCmd(command, args, workingDir);
         MugiLog.Info($"{command} {args}");
-        return new UnixUtil.RunOutput(String.Empty, String.Empty, 0);
+        return new UnixUtil.RunOutput(string.Empty, string.Empty, 0);
     }
 
     public static string StandardReplace(string input)

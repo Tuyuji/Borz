@@ -7,5 +7,5 @@ public enum ConfLevel : int
     Script = 2, //Stuff from scripts
     UserGobal = 3, // Users global config e.g ~/.borz/config 
     Workspace = 4, // Workspace specific config e.g. .borz/config
-    UserWorkspace = 5, // User specific project config e.g. .borz/config.ako
+    UserWorkspace = 5 // User specific project config e.g. .borz/config.ako
 }

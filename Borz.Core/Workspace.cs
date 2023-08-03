@@ -4,7 +4,7 @@ namespace Borz.Core;
 
 public static class Workspace
 {
-    public static string Location = String.Empty;
+    public static string Location = string.Empty;
     public static List<Project> Projects = new();
     public static List<string> ExecutedBorzFiles = new();
 
@@ -20,7 +20,7 @@ public static class Workspace
             Deserializer.FromString(Borz.Config.GetLayer(ConfLevel.Workspace),
                 File.ReadAllText(projectConfig));
 
-        var userProjectConfig = Path.Combine(Workspace.Location, ".borz", "usersettings.ako");
+        var userProjectConfig = Path.Combine(Location, ".borz", "usersettings.ako");
 
         Run();
     }
@@ -45,7 +45,7 @@ public static class Workspace
 
     public static void Reset()
     {
-        Workspace.Projects.Clear();
-        Workspace.ExecutedBorzFiles.Clear();
+        Projects.Clear();
+        ExecutedBorzFiles.Clear();
     }
 }

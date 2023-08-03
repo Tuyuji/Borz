@@ -13,10 +13,7 @@ public static class ScriptRunner
             e.GetCustomAttribute<MoonSharpUserDataAttribute>() != null ||
             e.GetCustomAttribute<BorzUserDataAttribute>() != null
         ).ToArray();
-        foreach (Type type in userDataTypes)
-        {
-            UserData.RegisterType(type);
-        }
+        foreach (var type in userDataTypes) UserData.RegisterType(type);
 
         UserData.RegisterType<Guid>();
         UserData.RegisterType<EventArgs>();
@@ -41,12 +38,8 @@ public static class ScriptRunner
 
         var types = typeof(Project).Assembly.GetTypes();
         foreach (var type in types)
-        {
             if (type.IsSubclassOf(typeof(Project)))
-            {
                 script.Globals[type.Name] = type;
-            }
-        }
 
         //Enums
         script.Globals["BinType"] = typeof(BinType);

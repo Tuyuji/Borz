@@ -29,6 +29,6 @@ public class BuildConfig
 
     public bool ConfigEquals(string config)
     {
-        return String.Equals(Config, config, StringComparison.InvariantCultureIgnoreCase);
+        return string.Equals(Config, config, StringComparison.InvariantCultureIgnoreCase);
     }
 }

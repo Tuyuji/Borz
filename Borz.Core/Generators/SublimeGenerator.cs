@@ -107,7 +107,7 @@ public class SublimeGenerator : IGenerator
 
     //No idea how sublime likes reused paths, so we'll just generate a new one each time
     //BDF = Borz Dummy Folder :)
-    int dummyPathCounter = 0;
+    private int dummyPathCounter = 0;
 
     private string GenerateDummyPath()
     {
@@ -118,13 +118,13 @@ public class SublimeGenerator : IGenerator
     public void Generate()
     {
         var wsName = Workspace.Settings.Name;
-        SublimeProject project = new SublimeProject();
+        var project = new SublimeProject();
 
         //go though workspace projects
         foreach (var workspaceProject in Workspace.Projects)
         {
             //for now just add the project directory
-            SublimeFolder folder = new SublimeFolder();
+            var folder = new SublimeFolder();
             folder.Name = workspaceProject.Name;
             //get the relative path to the project directory from the workspace directory
             folder.Path = Path.GetRelativePath(Workspace.Location,
@@ -141,7 +141,7 @@ public class SublimeGenerator : IGenerator
 
 
         //write the project file to .sublime-project
-        var file = new System.IO.StreamWriter(
+        var file = new StreamWriter(
             Path.Combine(Workspace.Location, $"{wsName}.sublime-project"),
             new FileStreamOptions() { Mode = FileMode.Create, Access = FileAccess.Write });
         //Json comment to tell the user not to edit the file
