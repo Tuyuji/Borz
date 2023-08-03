@@ -22,9 +22,7 @@ public class CppBuilder : IBuilder
         if (!(inProj is CppProject || inProj is CProject))
             throw new Exception("Project is not a CppProject or CProject");
 
-        //Just logging is just simulating a build
-        if (simulate)
-            Simulate = true;
+        Simulate = simulate;
 
         var generateCompileCommands = ShouldGenerateCompileCommands();
         //see if we should combind this into the workspace compile_commands.json
@@ -108,7 +106,7 @@ public class CppBuilder : IBuilder
         }
 
         //Due to source files compiling with this, were gonna need to recompile everything
-        List<string> sourceFilesToCompile = GetSourceFilesToCompile(project, compiler, ref objects, !pchCompiled);
+        var sourceFilesToCompile = GetSourceFilesToCompile(project, compiler, ref objects, !pchCompiled);
 
         if (sourceFilesToCompile.Count == 0 && !pchCompiled)
         {
@@ -329,6 +327,11 @@ public class CppBuilder : IBuilder
         });
     }
 
+    private DateTime GetLastWriteTimeOpt(string path)
+    {
+        return Simulate ? DateTime.Now : File.GetLastWriteTime(path);
+    }
+
     private List<string> CompileSourceFiles(CProject project, ICCompiler compiler, List<string> sourceFilesToCompile)
     {
         ConcurrentQueue<string> objects = new();
@@ -347,11 +350,11 @@ public class CppBuilder : IBuilder
                 project.IntermediateDirectory,
                 objFileName);
 
-            var objFileLastWrite = File.GetLastWriteTime(objFilePath);
-            var sourceFileLastWrite = File.GetLastWriteTime(sourceFile);
+            var objFileLastWrite = GetLastWriteTimeOpt(objFilePath);
+            var sourceFileLastWrite = GetLastWriteTimeOpt(sourceFile);
 
 
-            if (!File.Exists(objFilePath) | (objFileLastWrite < sourceFileLastWrite))
+            if (!File.Exists(objFilePath) | (objFileLastWrite < sourceFileLastWrite) || Simulate)
             {
                 var sourceAbsolute = Path.Combine(project.ProjectDirectory, sourceFile);
                 var result = compiler.CompileObject(project, sourceFile, objFilePath);
