@@ -395,7 +395,7 @@ public class CProject : Project
                 paths.AddRange(cppProject.GetPublicIncludePaths());
             else if (dependency is CProject cProject) paths.AddRange(cProject.GetPublicIncludePaths());
 
-        return paths.ToArray();
+        return paths.Distinct().ToArray();
     }
 
     public string[] GetPublicIncludePaths()
@@ -411,7 +411,7 @@ public class CProject : Project
                 paths.AddRange(cppProject.GetPublicIncludePaths());
             else if (dependency is CProject cProject) paths.AddRange(cProject.GetPublicIncludePaths());
 
-        return paths.ToArray();
+        return paths.Distinct().ToArray();
     }
 
     public string[] GetLibraryPaths()
