@@ -31,10 +31,22 @@ public abstract class Project
 
     public List<Project> Dependencies = new();
 
-    public string OutputDirectory;
-    public string IntermediateDirectory;
+    public string OutputDirectory
+    {
+        get => _outputDir;
+        set => _outputDir = Utils.StandardProjectReplace(value, ProjectDirectory, Name);
+    }
+
+    public string IntermediateDirectory
+    {
+        get => _intDir;
+        set => _intDir = Utils.StandardProjectReplace(value, ProjectDirectory, Name);
+    }
 
     public event EventHandler FinishedCompiling;
+
+    private string _outputDir;
+    private string _intDir;
 
     public void CallFinishedCompiling()
     {
@@ -50,24 +62,20 @@ public abstract class Project
     {
         if (directory == string.Empty)
             directory = Directory.GetCurrentDirectory();
-
-        OutputDirectory = Borz.Config.Get("paths", "output");
-        IntermediateDirectory = Borz.Config.Get("paths", "int");
-
-        OutputDirectory = Utils.StandardProjectReplace(OutputDirectory, directory, name);
-        IntermediateDirectory = Utils.StandardProjectReplace(IntermediateDirectory, directory, name);
-
-        if (OutputDirectory == "")
-            MugiLog.Fatal("Output directory is empty");
-        if (IntermediateDirectory == "")
-            MugiLog.Fatal("Intermediate directory is empty");
-
         OutputName = Borz.Config.Get("project", "output");
 
         ProjectDirectory = directory;
         Name = name;
         Type = type;
         Language = language;
+
+        OutputDirectory = Borz.Config.Get("paths", "output");
+        IntermediateDirectory = Borz.Config.Get("paths", "int");
+
+        if (OutputDirectory == "")
+            MugiLog.Fatal("Output directory is empty");
+        if (IntermediateDirectory == "")
+            MugiLog.Fatal("Intermediate directory is empty");
 
         if (addToWorkspace)
             Workspace.Projects.Add(this);
