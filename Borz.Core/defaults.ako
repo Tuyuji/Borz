@@ -4,18 +4,20 @@ log.level "Info"
 
 #Compilers
 compiler.c   &Gcc
-compiler.cxx &Gcc
+compiler.cpp &Gcc
+compiler.d   &Gdc
 
 #Linkers
 linker.c   &Gcc
-linker.cxx &Gcc
+linker.cpp &Gcc
+linker.d   &Gdc
 
 #Some cross compiling help
 #Format is <host>.<target>.<compiler>
 linux64.windows.c "x86_64-w64-mingw32-gcc"
-linux64.windows.cxx "x86_64-w64-mingw32-g++"
+linux64.windows.cpp "x86_64-w64-mingw32-g++"
 linux64.wasm.c "emcc"
-linux64.wasm.cxx "em++"
+linux64.wasm.cpp "em++"
 
 #Platform info
 platform.info [

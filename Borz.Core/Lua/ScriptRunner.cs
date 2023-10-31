@@ -1,4 +1,5 @@
 using System.Reflection;
+using Borz.Core.Languages.D;
 using Borz.Core.PkgConfig;
 using MoonSharp.Interpreter;
 
@@ -29,6 +30,7 @@ public static class ScriptRunner
         script.Globals["dir"] = typeof(LuaDir);
         script.Globals["file"] = typeof(LuaFile);
         script.Globals["path"] = typeof(LuaPath);
+        script.Globals["dub"] = typeof(Dub);
         script.Globals["log"] = typeof(Log);
         script.Globals["pkgconf"] = typeof(LuaPkgConf);
         script.Globals["BuildConf"] = Borz.BuildConfig;
@@ -47,6 +49,7 @@ public static class ScriptRunner
         script.Globals["ResourceType"] = typeof(Util.ResourceType);
         script.Globals["Platform"] = typeof(Platform);
         script.Globals["VersionType"] = typeof(VersionType);
+        script.Globals["PhobosType"] = typeof(PhobosType);
 
         return script;
     }

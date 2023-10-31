@@ -26,13 +26,11 @@ public static class MugiLog
     {
         public LogLevel Level;
         public string Message;
-        public DateTime Time;
         public dynamic? Data;
 
-        public LogInstance(LogLevel level, string message, DateTime time = default, dynamic? data = null)
+        public LogInstance(LogLevel level, string message, dynamic? data = null)
         {
             Level = level;
-            Time = time;
             Message = message;
             Data = data;
         }
@@ -111,15 +109,6 @@ public static class MugiLog
                 _ => _consoleOut
             };
 
-
-            if (ShowTime)
-            {
-                writer.Write('[');
-                writer.Write(instance.Time.ToString(TimeFormat)); // For now this fine
-                writer.Write(']');
-                writer.Write(' ');
-            }
-
             var levelStr = Enum.GetName(type.GetType(), type);
             writer.Write(levelStr);
             //Space this out to the max length
@@ -137,7 +126,7 @@ public static class MugiLog
         if (!Debugger.IsAttached && level < MinLevel)
             return;
 
-        _logQueue.Enqueue(new LogInstance(level, message, DateTime.Now));
+        _logQueue.Enqueue(new LogInstance(level, message));
         _logWaitHandle.Set();
     }
 

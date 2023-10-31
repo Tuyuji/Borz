@@ -31,5 +31,7 @@
         </Compile>
     </ItemGroup>
 
-    <Import Project="$(SolutionDir)/UserExe.props"/>
+    <ItemGroup>
+        <ProjectReference Include="..\Borz.Core\Borz.Core.csproj"/>
+    </ItemGroup>
 </Project>

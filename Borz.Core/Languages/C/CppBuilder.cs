@@ -1,7 +1,6 @@
 using System.Collections.Concurrent;
 using System.Diagnostics;
-using AkoSharp;
-using Newtonsoft.Json;
+using Borz.Core.Helpers;
 
 namespace Borz.Core.Languages.C;
 
@@ -9,37 +8,42 @@ public class CppBuilder : IBuilder
 {
     public bool Simulate { get; set; } = false;
 
-    private static void CheckFolder(string path)
+    public static string[] SupportedLangs = new[]
     {
-        if (!Directory.Exists(path))
-            Directory.CreateDirectory(path);
-    }
+        Language.C,
+        Language.Cpp,
+        Language.D
+    };
 
     public bool Build(Project inProj, bool simulate)
     {
+        var language = inProj.Language;
+        if (!SupportedLangs.Contains(language))
+            throw new Exception($"Language '{language}' is not supported by CppBuilder");
+
         var project = (CProject)inProj;
-        //make sure inProj is a CppProject or CProject
-        if (!(inProj is CppProject || inProj is CProject))
-            throw new Exception("Project is not a CppProject or CProject");
 
         Simulate = simulate;
 
-        var generateCompileCommands = ShouldGenerateCompileCommands();
-        //see if we should combind this into the workspace compile_commands.json
-        bool doWorkspaceCompileCommands = Borz.Config.Get("builder", "cpp", "combineCmds");
+        var generateCompileCommands = BuildHelper.ShouldGenerateCompileCommands(language);
 
-        var compiler = CreateCompiler();
-        var linker = CreateLinker();
+        CompileCommands.CompileDatabase? compileDb = null;
+        var compileCmdLocation = BuildHelper.GetCompileCommandLocation(language, project);
+        if (generateCompileCommands)
+            compileDb = new CompileCommands.CompileDatabase(compileCmdLocation);
 
-        if (!ValidateCompiler(compiler) || !ValidateLinker(linker))
+        var compiler = BuildHelper.CreateCompiler<ICCompiler>(language);
+        var linker = BuildHelper.CreateLinker<ICCompiler>(language);
+
+        if (!BuildHelper.ValidateCCompiler(compiler) || !BuildHelper.ValidateCCompiler(linker, true))
             throw new Exception("Compiler or linker is invalid");
 
         compiler.GenerateSourceDependencies = true;
-        compiler.GenerateCompileCommands = generateCompileCommands;
+        compiler.CompileDatabase = compileDb;
         compiler.OnlyOutputCompileCommands = Simulate;
 
-        compiler.SetJustLog(Simulate);
-        linker.SetJustLog(Simulate);
+        compiler.JustLog = Simulate;
+        linker.JustLog = Simulate;
 
         MugiLog.Debug($"Using compiler: {compiler.GetFriendlyName()}");
         MugiLog.Debug($"Using linker: {linker.GetFriendlyName(true)}");
@@ -47,8 +51,8 @@ public class CppBuilder : IBuilder
         var outputDir = project.OutputDirectory;
         var intDir = project.IntermediateDirectory;
 
-        CheckFolder(outputDir);
-        CheckFolder(intDir);
+        Utils.CheckFolder(outputDir);
+        Utils.CheckFolder(intDir);
 
         List<string> objects = new();
 
@@ -126,20 +130,19 @@ public class CppBuilder : IBuilder
 
             stopwatch.Stop();
             compileTime = stopwatch.ElapsedMilliseconds;
-            if (generateCompileCommands)
-                WriteCompileCommands(
-                    doWorkspaceCompileCommands ? Workspace.Location : project.ProjectDirectory,
-                    compiler.CompileCommands.ToArray());
         }
 
-        var needToRelink = NeedRelink(project) || pchCompiled || Simulate;
-        if (!needToRelink)
-            //If the binary doesn't exist, we need to link it
-            if (!File.Exists(project.GetOutputFilePath()))
+        //Just a sanity check
+        //lets see if the objects are bigger than 0kb
+        if (objects.Count > 0 && !Simulate)
+            foreach (var o in objects)
             {
-                MugiLog.Debug("Binary doesn't exist, need to relink.");
-                needToRelink = true;
+                if (new FileInfo(o).Length != 0) continue;
+                MugiLog.Error($"Object file is 0kb: {o}");
+                return false;
             }
+
+        var needToRelink = NeedRelink(project) || pchCompiled || Simulate;
 
         if (needToRelink || sourceFilesToCompile.Count != 0)
         {
@@ -159,150 +162,28 @@ public class CppBuilder : IBuilder
             project.IsBuilt = true;
         }
 
+        compileDb?.SaveToFile(compileCmdLocation);
         project.CallFinishedCompiling();
 
         return true;
     }
 
+
     private List<string> GetSourceFilesToCompile(CProject project, ICCompiler compiler, ref List<string> objects,
         bool checkDeps = true)
     {
-        if (Simulate)
-            //If we're simulating, we need to compile everything
-            return project.SourceFiles;
-
-        List<string> sourceFilesToCompile = new();
-
-        foreach (var sourceFile in project.SourceFiles)
-        {
-            var objFileName = Path.GetFileNameWithoutExtension(sourceFile) + ".o";
-            var objFileAbs = Path.Combine(project.IntermediateDirectory, objFileName);
-            if (!checkDeps)
-            {
-                sourceFilesToCompile.Add(sourceFile);
-                continue;
-            }
-
-            if (!File.Exists(objFileAbs))
-            {
-                //No object for source, compile it.
-                sourceFilesToCompile.Add(sourceFile);
-                MugiLog.Debug("No object file for source file recompiling: " + sourceFile);
-                continue;
-            }
-
-            var sourceFileLastWrite = File.GetLastWriteTime(project.GetPathAbs(sourceFile));
-            var objFileLastWrite = File.GetLastWriteTime(objFileAbs);
-
-            //See if source file is newer than object file.
-            if (sourceFileLastWrite > objFileLastWrite)
-            {
-                //Source file is newer, compile it.
-                sourceFilesToCompile.Add(sourceFile);
-                MugiLog.Debug("Source file is newer than object file recompiling: " + sourceFile);
-                continue;
-            }
-
-            var needsCompile = false;
-
-            if (compiler.GetDependencies(project, objFileName, out var deps))
-                //See if any of the dependencies are newer than the object file.
-                foreach (var dep in deps)
-                {
-                    var depLastWrite = File.GetLastWriteTime(dep);
-                    if (depLastWrite > objFileLastWrite)
-                    {
-                        //Dependency is newer, compile it.
-                        needsCompile = true;
-                        break;
-                    }
-                }
-
-            if (needsCompile)
-            {
-                sourceFilesToCompile.Add(sourceFile);
-                MugiLog.Debug("Dependency is newer than object file recompiling: " + sourceFile);
-            }
-            else
-            {
-                objects.Add(objFileAbs);
-                MugiLog.Debug("Object file is up to date: " + sourceFile);
-            }
-        }
-
-        return sourceFilesToCompile;
-    }
-
-
-    public void WriteCompileCommands(string outputLocation, CompileCommand[] commands)
-    {
-        //Write compile_commands.json
-        //But if it already exists, find files that are in our list and update them.
-        //This is to avoid recompiling everything when we add a new file.
-
-        List<CompileCommand> jsonCommands = new();
-
-        var compileCommandsPath = Path.Combine(outputLocation, "compile_commands.json");
-        if (File.Exists(compileCommandsPath))
-        {
-            var json = JsonConvert.DeserializeObject<List<CompileCommand>>(File.ReadAllText(compileCommandsPath));
-            if (json != null)
-            {
-                jsonCommands = json;
-                //remove all commands that are in our list.
-                foreach (var command in commands) jsonCommands.RemoveAll(c => c.File == command.File);
-            }
-        }
-
-        jsonCommands.AddRange(commands);
-        var jsonStr = JsonConvert.SerializeObject(jsonCommands, Formatting.Indented);
-        File.WriteAllText(compileCommandsPath, jsonStr);
-    }
-
-    private bool ShouldGenerateCompileCommands()
-    {
-        var akoVarComCmds = Borz.Config.Get("builder", "cpp", "compileCmds");
-        if (akoVarComCmds is { Type: AkoVar.VarType.BOOL } && akoVarComCmds.Value == true)
-            return true;
-        return false;
-    }
-
-    private ICCompiler CreateCompiler()
-    {
-        Type compilerType = Borz.Config.Get("compiler", "cxx");
-        return compilerType.CreateInstance<ICCompiler>()!;
-    }
-
-    private ICCompiler CreateLinker()
-    {
-        Type linkerType = Borz.Config.Get("linker", "cxx");
-        return linkerType.CreateInstance<ICCompiler>()!;
-    }
-
-    private bool ValidateCompiler(ICCompiler compiler)
-    {
-        if (!compiler.IsSupported(out var reason))
-        {
-            MugiLog.Fatal("Compiler not supported: " + reason);
-            return false;
-        }
-
-        return true;
-    }
-
-    private bool ValidateLinker(ICCompiler linker)
-    {
-        if (!linker.IsSupported(out var reason))
-        {
-            MugiLog.Fatal("Linker not supported: " + reason);
-            return false;
-        }
-
-        return true;
+        return BuildHelper.GetSourceFilesToCompile(project, project.SourceFiles, compiler, ref objects, checkDeps,
+            Simulate, ".o");
     }
 
     private bool NeedRelink(CProject project)
     {
+        if (!project.OutputFileExists())
+        {
+            MugiLog.Debug("Binary doesn't exist, need to relink.");
+            return true;
+        }
+
         //CProjecst and CppProjects have IsBuilt set to true when we have compiled and linked them
         //We can use this to see if we need to relink a project.
         //If our project depends on a static lib that has been built, we need to relink.
@@ -327,11 +208,6 @@ public class CppBuilder : IBuilder
         });
     }
 
-    private DateTime GetLastWriteTimeOpt(string path)
-    {
-        return Simulate ? DateTime.Now : File.GetLastWriteTime(path);
-    }
-
     private List<string> CompileSourceFiles(CProject project, ICCompiler compiler, List<string> sourceFilesToCompile)
     {
         ConcurrentQueue<string> objects = new();
@@ -350,8 +226,8 @@ public class CppBuilder : IBuilder
                 project.IntermediateDirectory,
                 objFileName);
 
-            var objFileLastWrite = GetLastWriteTimeOpt(objFilePath);
-            var sourceFileLastWrite = GetLastWriteTimeOpt(sourceFile);
+            var objFileLastWrite = BuildHelper.GetLastWriteTimeOptional(objFilePath, Simulate);
+            var sourceFileLastWrite = BuildHelper.GetLastWriteTimeOptional(sourceFile, Simulate);
 
 
             if (!File.Exists(objFilePath) | (objFileLastWrite < sourceFileLastWrite) || Simulate)
@@ -365,6 +241,10 @@ public class CppBuilder : IBuilder
                     MugiLog.Fatal(result.Error);
                     throw execp;
                 }
+
+                //log info just in case
+                if (result.Ouput.Length > 3)
+                    MugiLog.Info(result.Ouput);
 
                 if (result.Error.Length > 3)
                     //Some warning
@@ -388,38 +268,5 @@ public class CppBuilder : IBuilder
             MugiLog.Fatal(result.Error);
             throw execp;
         }
-    }
-
-    //Either arguments or command is required.
-    //arguments is preferred, as shell (un)escaping is a possible source of errors.
-    [Serializable]
-    public class CompileCommand
-    {
-        //The working directory of the compilation.
-        //All paths specified in the command or file fields must be either absolute or relative to this directory.
-        [JsonProperty("directory")] public string Directory { get; set; } = "";
-
-        //The main translation unit source processed by this compilation step.
-        //This is used by tools as the key into the compilation database.
-        //There can be multiple command objects for the same file,
-        //for example if the same source file is compiled with different configurations.
-        [JsonProperty("file")] public string File { get; set; } = "";
-
-        //The compile command argv as list of strings.
-        //This should run the compilation step for the translation unit file.
-        //arguments[0] should be the executable name, such as clang++.
-        //Arguments should not be escaped, but ready to pass to execvp().
-        [JsonProperty("arguments")] public string[] Arguments { get; set; } = Array.Empty<string>();
-
-        //The compile command as a single shell-escaped string.
-        //Arguments may be shell quoted and escaped following platform conventions,
-        //with ‘"’ and ‘\’ being the only special characters.
-        //Shell expansion is not supported.
-        [JsonProperty("command")] public string Command { get; set; } = "";
-
-        //The name of the output created by this compilation step.
-        //This field is optional.
-        //It can be used to distinguish different processing modes of the same input file.
-        [JsonProperty("output")] public string Output { get; set; } = "";
     }
 }

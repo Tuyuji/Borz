@@ -1,9 +1,0 @@
-<Project>
-    <ItemGroup>
-        <ProjectReference Include="$(SolutionDir)/Borz.Core/Borz.Core.csproj"/>
-        <ProjectReference 
-                Condition=" '$([System.Runtime.InteropServices.RuntimeInformation]::IsOSPlatform($([System.Runtime.InteropServices.OSPlatform]::Linux)))' " 
-                Include="$(SolutionDir)/Borz.Linux/Borz.Linux.csproj"
-                PrivateAssets="all" />
-    </ItemGroup>
-</Project>

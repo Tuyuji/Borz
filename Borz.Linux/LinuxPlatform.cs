@@ -6,7 +6,7 @@ using ByteSizeLib;
 
 namespace Borz.Linux;
 
-[ShortType("PlatLinux")]
+[ShortType("Platform")]
 public class LinuxPlatform : IPlatform
 {
     public string GetUserConfigPath()

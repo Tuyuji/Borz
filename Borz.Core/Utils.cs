@@ -2,6 +2,12 @@ namespace Borz.Core;
 
 public static class Utils
 {
+    public static void CheckFolder(string path)
+    {
+        if (!Directory.Exists(path))
+            Directory.CreateDirectory(path);
+    }
+
     public static T? CreateInstance<T>(this Type type, params object?[]? args)
     {
         return (T?)Activator.CreateInstance(type, args);

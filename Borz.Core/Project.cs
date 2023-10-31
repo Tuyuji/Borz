@@ -133,4 +133,9 @@ public abstract class Project
         var outputFileName = Utils.AddPlatformIfixsToFileName(outputName, Type);
         return Path.Combine(OutputDirectory, outputFileName);
     }
+
+    public bool OutputFileExists()
+    {
+        return File.Exists(GetOutputFilePath());
+    }
 }

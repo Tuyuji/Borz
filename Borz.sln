@@ -4,7 +4,7 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Borz", "Borz\Borz.csproj", 
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Borz.Core", "Borz.Core\Borz.Core.csproj", "{D1314DAA-A92B-4230-A2B6-63848B2C7A94}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Borz.Linux", "Borz.Linux\Borz.Linux.csproj", "{321E5B05-08CB-4E7A-A557-CE8FA75FF6A2}"
+Project("{D954291E-2A0B-460D-934E-DC6B0785DB48}") = "Borz.Linux", "Borz.Linux\Borz.Linux.shproj", "{A12DCAA3-76E7-470C-8B52-2320A6A36ECA}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -20,9 +20,5 @@ Global
 		{D1314DAA-A92B-4230-A2B6-63848B2C7A94}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{D1314DAA-A92B-4230-A2B6-63848B2C7A94}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{D1314DAA-A92B-4230-A2B6-63848B2C7A94}.Release|Any CPU.Build.0 = Release|Any CPU
-		{321E5B05-08CB-4E7A-A557-CE8FA75FF6A2}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{321E5B05-08CB-4E7A-A557-CE8FA75FF6A2}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{321E5B05-08CB-4E7A-A557-CE8FA75FF6A2}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{321E5B05-08CB-4E7A-A557-CE8FA75FF6A2}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal

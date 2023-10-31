@@ -2,7 +2,7 @@ namespace Borz.Core;
 
 public interface ICompiler
 {
-    void SetJustLog(bool justLog);
+    public bool JustLog { get; set; }
 
     string GetFriendlyName();
 }

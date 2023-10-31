@@ -1,4 +1,4 @@
-using System.Collections.Concurrent;
+using Borz.Core.Helpers;
 using Borz.Core.Languages.C;
 using Microsoft.VisualBasic;
 
@@ -13,9 +13,9 @@ public abstract class CcCompiler : ICCompiler
     }
 
     public bool GenerateSourceDependencies { get; set; }
+    public CompileCommands.CompileDatabase? CompileDatabase { get; set; }
     public bool GenerateCompileCommands { get; set; }
 
-    public ConcurrentBag<CppBuilder.CompileCommand> CompileCommands { get; } = new();
     public bool OnlyOutputCompileCommands { get; set; } = false;
 
     public abstract string CCompilerElf { get; }
@@ -53,7 +53,7 @@ public abstract class CcCompiler : ICCompiler
         AddDefines(project, ref cmdArgs);
         AddIncludes(project, ref cmdArgs);
         AddPic(project, ref cmdArgs);
-        AddLibraries(project, ref cmdArgs);
+        //AddLibraries(project, ref cmdArgs);
 
         cmdArgs.Add("-o");
         cmdArgs.Add(outputFile);
@@ -65,16 +65,14 @@ public abstract class CcCompiler : ICCompiler
 
         var compiler = sourceFile.EndsWith(".cpp") ? CppCompilerElf : CCompilerElf;
 
-        if (GenerateCompileCommands)
-            CompileCommands.Add(
-                new CppBuilder.CompileCommand()
-                {
-                    Directory = project.ProjectDirectory,
-                    Arguments = cmdArgs.ToArray(),
-                    Command = compiler + " " + Strings.Join(cmdArgs.ToArray(), " "),
-                    File = sourceFile,
-                    Output = outputFile
-                });
+        CompileDatabase?.Add(new CompileCommands.CompileCommand
+        {
+            Directory = project.ProjectDirectory,
+            Arguments = cmdArgs.ToArray(),
+            Command = compiler + " " + Strings.Join(cmdArgs.ToArray(), " "),
+            File = sourceFile,
+            Output = outputFile
+        });
 
         var res = Utils.RunCmd(compiler,
             Strings.Join(cmdArgs.ToArray())!, project.ProjectDirectory, JustLog);
@@ -90,19 +88,15 @@ public abstract class CcCompiler : ICCompiler
 
         project = unknownProject as CProject ?? throw new InvalidOperationException();
 
-        var outputPath = project.OutputDirectory;
-        var outputName = project.GetOutputName();
+        var outputPath = project.GetOutputFilePath();
 
         if (project.Type == BinType.StaticLib)
         {
-            var output = Path.Combine(outputPath, $"lib{outputName}.a");
-            return Utils.RunCmd("ar", $"-rcs \"{output}\" " + string.Join(" ", objects.ToArray()),
+            return Utils.RunCmd("ar", $"-rcs \"{outputPath}\" " + string.Join(" ", objects.ToArray()),
                 project.ProjectDirectory, JustLog);
         }
 
         List<string> cmdArgs = new();
-
-        outputPath = project.GetOutputFilePath();
 
         cmdArgs.Add("-o");
         cmdArgs.Add(outputPath);
@@ -211,11 +205,6 @@ public abstract class CcCompiler : ICCompiler
         var res = Utils.RunCmd(project.Language == Language.C ? CCompilerElf : CppCompilerElf,
             Strings.Join(cmdArgs.ToArray())!, project.ProjectDirectory, JustLog);
         return res;
-    }
-
-    public void SetJustLog(bool justLog)
-    {
-        JustLog = justLog;
     }
 
     public abstract string GetFriendlyName();

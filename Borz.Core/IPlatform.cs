@@ -1,3 +1,5 @@
+using AkoSharp;
+
 namespace Borz.Core.Platform;
 
 public interface IPlatform
@@ -10,7 +12,9 @@ public interface IPlatform
         {
             if (_instance != null) return _instance;
 
-            var type = (Type)Borz.Config.Get("platform");
+            var type = (Type?)ShortTypeRegistry.GetTypeFromShortType("Platform");
+            if (type == null)
+                throw new Exception("No platform short-type exists, your platform is unsupported.");
             _instance = (IPlatform?)Activator.CreateInstance(type);
             if (_instance == null)
                 throw new Exception("Platform not supported");

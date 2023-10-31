@@ -1,6 +1,5 @@
 using System.Collections.Concurrent;
 using System.Reflection;
-using System.Runtime.InteropServices;
 using AkoSharp;
 using Borz.Core.Lua;
 using Borz.Core.Platform;
@@ -29,9 +28,6 @@ public static class Borz
 
         ShortTypeRegistry.AutoRegister();
 
-        //Load up platform assembly
-        LoadPlatformAssembly();
-
         var configFolder = Path.Combine(IPlatform.Instance.GetUserConfigPath(), "borz");
         if (!Directory.Exists(configFolder))
             Directory.CreateDirectory(configFolder);
@@ -59,42 +55,6 @@ public static class Borz
             //load up main.lua
             var mainLua = Path.Combine(userScripts, "main.lua");
             if (File.Exists(mainLua)) RunScript(mainLua);
-        }
-    }
-
-    private static void LoadPlatformAssembly()
-    {
-        var dllName = "";
-        if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
-            dllName = "Borz.Linux";
-        else if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
-            dllName = "Borz.MacOS";
-        else if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
-            dllName = "Borz.Windows";
-        else
-            throw new Exception("Platform not supported");
-
-        var dllFilename = $"{dllName}.dll";
-        //Get the executables path
-        var path = Path.GetDirectoryName(Environment.ProcessPath);
-        if (path == null)
-            throw new Exception("Could not get path to executable.");
-
-        var fullDllPath = Path.Combine(path, dllFilename);
-
-        if (!File.Exists(fullDllPath))
-            throw new Exception("Platform assembly not found.");
-
-        var platAssembly = Assembly.LoadFrom(fullDllPath);
-        ShortTypeRegistry.Register(platAssembly);
-
-        //Now get embedded resource called platform.ako and load it into the config
-        var resourceName = $"{dllName}.platform.ako";
-        using (var stream = platAssembly.GetManifestResourceStream(resourceName))
-        using (var reader = new StreamReader(stream))
-        {
-            var result = reader.ReadToEnd();
-            Deserializer.FromString(Config.GetLayer(ConfLevel.Platform), result);
         }
     }
 

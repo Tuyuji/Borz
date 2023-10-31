@@ -19,4 +19,9 @@
         <None Remove="defaults.ako"/>
         <EmbeddedResource Include="defaults.ako"/>
     </ItemGroup>
+
+    <Import
+            Condition=" '$([System.Runtime.InteropServices.RuntimeInformation]::IsOSPlatform($([System.Runtime.InteropServices.OSPlatform]::Linux)))' "
+            Project="..\Borz.Linux\Borz.Linux.projitems" Label="Shared"
+    />
 </Project>

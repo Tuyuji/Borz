@@ -1,4 +1,4 @@
-using System.Collections.Concurrent;
+using Borz.Core.Helpers;
 
 namespace Borz.Core.Languages.C;
 
@@ -8,9 +8,7 @@ namespace Borz.Core.Languages.C;
 public interface ICCompiler : ICompiler
 {
     public bool GenerateSourceDependencies { get; set; }
-    public bool GenerateCompileCommands { get; set; }
-
-    public ConcurrentBag<CppBuilder.CompileCommand> CompileCommands { get; }
+    public CompileCommands.CompileDatabase? CompileDatabase { get; set; }
     public bool OnlyOutputCompileCommands { get; set; }
 
     UnixUtil.RunOutput CompileObject(Project project, string sourceFile, string outputFile);

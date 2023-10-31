@@ -452,10 +452,12 @@ public class CProject : Project
             switch (dependency)
             {
                 case CppProject cppProject:
-                    paths.Add(Path.GetRelativePath(outputDir, cppProject.GetPathAbs(cppProject.OutputDirectory)));
+                    if (cppProject.Type == BinType.SharedObj)
+                        paths.Add(Path.GetRelativePath(outputDir, cppProject.GetPathAbs(cppProject.OutputDirectory)));
                     break;
                 case CProject cProject:
-                    paths.Add(Path.GetRelativePath(outputDir, cProject.GetPathAbs(cProject.OutputDirectory)));
+                    if (cProject.Type == BinType.SharedObj)
+                        paths.Add(Path.GetRelativePath(outputDir, cProject.GetPathAbs(cProject.OutputDirectory)));
                     break;
             }
 
