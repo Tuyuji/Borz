@@ -1,5 +1,6 @@
 using System.Collections.Concurrent;
-using Newtonsoft.Json;
+using System.Text.Json;
+using System.Text.Json.Serialization;
 
 namespace Borz.Core.Helpers;
 
@@ -12,30 +13,30 @@ public class CompileCommands
     {
         //The working directory of the compilation.
         //All paths specified in the command or file fields must be either absolute or relative to this directory.
-        [JsonProperty("directory")] public string Directory { get; set; } = "";
+        [JsonPropertyName("directory")] public string Directory { get; set; } = "";
 
         //The main translation unit source processed by this compilation step.
         //This is used by tools as the key into the compilation database.
         //There can be multiple command objects for the same file,
         //for example if the same source file is compiled with different configurations.
-        [JsonProperty("file")] public string File { get; set; } = "";
+        [JsonPropertyName("file")] public string File { get; set; } = "";
 
         //The compile command argv as list of strings.
         //This should run the compilation step for the translation unit file.
         //arguments[0] should be the executable name, such as clang++.
         //Arguments should not be escaped, but ready to pass to execvp().
-        [JsonProperty("arguments")] public string[] Arguments { get; set; } = Array.Empty<string>();
+        [JsonPropertyName("arguments")] public string[] Arguments { get; set; } = Array.Empty<string>();
 
         //The compile command as a single shell-escaped string.
         //Arguments may be shell quoted and escaped following platform conventions,
         //with ‘"’ and ‘\’ being the only special characters.
         //Shell expansion is not supported.
-        [JsonProperty("command")] public string Command { get; set; } = "";
+        [JsonPropertyName("command")] public string Command { get; set; } = "";
 
         //The name of the output created by this compilation step.
         //This field is optional.
         //It can be used to distinguish different processing modes of the same input file.
-        [JsonProperty("output")] public string Output { get; set; } = "";
+        [JsonPropertyName("output")] public string Output { get; set; } = "";
     }
 
     public class CompileDatabase
@@ -56,13 +57,13 @@ public class CompileCommands
         {
             if (!File.Exists(file)) throw new FileNotFoundException("Compile database file not found.", file);
 
-            var json = JsonConvert.DeserializeObject<List<CompileCommand>>(File.ReadAllText(file));
+            var json = JsonSerializer.Deserialize<List<CompileCommand>>(File.ReadAllText(file));
             if (json != null) _commands = new ConcurrentBag<CompileCommand>(json);
         }
 
         public void SaveToFile(string file)
         {
-            File.WriteAllText(file, JsonConvert.SerializeObject(_commands, Formatting.Indented));
+            File.WriteAllText(file, JsonSerializer.Serialize(_commands));
         }
     }
 }

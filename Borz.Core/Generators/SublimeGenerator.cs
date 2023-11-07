@@ -1,4 +1,5 @@
-using Newtonsoft.Json;
+using System.Text.Json;
+using System.Text.Json.Serialization;
 
 namespace Borz.Core.Generators;
 
@@ -8,9 +9,9 @@ public class SublimeGenerator : IGenerator
     [Serializable]
     private class SublimeProject
     {
-        [JsonProperty("folders")] public List<SublimeFolder> Folders { get; set; }
+        [JsonPropertyName("folders")] public List<SublimeFolder> Folders { get; set; }
 
-        [JsonProperty("settings")] public SublimeSettings Settings { get; set; }
+        [JsonPropertyName("settings")] public SublimeSettings Settings { get; set; }
 
         public SublimeProject()
         {
@@ -21,31 +22,32 @@ public class SublimeGenerator : IGenerator
     [Serializable]
     private class SublimeFolder
     {
-        [JsonProperty("name")] public string? Name { get; set; }
+        [JsonPropertyName("name")] public string? Name { get; set; }
 
-        [JsonProperty("path")] public string Path { get; set; }
+        [JsonPropertyName("path")] public string Path { get; set; }
 
-        [JsonProperty("file_include_patterns")]
+        [JsonPropertyName("file_include_patterns")]
         public List<string>? FileIncludePatterns { get; set; }
 
-        [JsonProperty("file_exclude_patterns")]
+        [JsonPropertyName("file_exclude_patterns")]
         public List<string>? FileExcludePatterns { get; set; }
 
-        [JsonProperty("folder_include_patterns")]
+        [JsonPropertyName("folder_include_patterns")]
         public List<string>? FolderIncludePatterns { get; set; }
 
-        [JsonProperty("folder_exclude_patterns")]
+        [JsonPropertyName("folder_exclude_patterns")]
         public List<string>? FolderExcludePatterns { get; set; }
 
-        [JsonProperty("binary_file_patterns")] public List<string>? BinaryFilePatterns { get; set; }
+        [JsonPropertyName("binary_file_patterns")]
+        public List<string>? BinaryFilePatterns { get; set; }
 
-        [JsonProperty("index_include_patterns")]
+        [JsonPropertyName("index_include_patterns")]
         public List<string>? IndexIncludePatterns { get; set; }
 
-        [JsonProperty("index_exclude_patterns")]
+        [JsonPropertyName("index_exclude_patterns")]
         public List<string>? IndexExcludePatterns { get; set; }
 
-        [JsonProperty("follow_symlinks")] public bool? FollowSymlinks { get; set; }
+        [JsonPropertyName("follow_symlinks")] public bool? FollowSymlinks { get; set; }
 
         public SublimeFolder()
         {
@@ -55,7 +57,7 @@ public class SublimeGenerator : IGenerator
     [Serializable]
     private class SublimeSettings
     {
-        [JsonProperty("tab_size")] public int TabSize { get; set; }
+        [JsonPropertyName("tab_size")] public int TabSize { get; set; }
     }
 
 
@@ -64,44 +66,44 @@ public class SublimeGenerator : IGenerator
     [Serializable]
     private class SublimeBuildTool
     {
-        [JsonProperty("selector")] public string? Selector { get; set; }
+        [JsonPropertyName("selector")] public string? Selector { get; set; }
 
-        [JsonProperty("file_patterns")] public List<string>? FilePatterns { get; set; }
+        [JsonPropertyName("file_patterns")] public List<string>? FilePatterns { get; set; }
 
-        [JsonProperty("keyfiles")] public List<string>? KeyFiles { get; set; }
+        [JsonPropertyName("keyfiles")] public List<string>? KeyFiles { get; set; }
 
-        [JsonProperty("variants")] public List<SublimeBuildTool> Variants { get; set; }
+        [JsonPropertyName("variants")] public List<SublimeBuildTool> Variants { get; set; }
 
         //next is cancel, this can be a string or a list of strings
-        [JsonProperty("cancel")] public object? Cancel { get; set; }
+        [JsonPropertyName("cancel")] public object? Cancel { get; set; }
 
-        [JsonProperty("target")] public string? Target { get; set; }
+        [JsonPropertyName("target")] public string? Target { get; set; }
 
-        [JsonProperty("windows")] public object? Windows { get; set; }
+        [JsonPropertyName("windows")] public object? Windows { get; set; }
 
-        [JsonProperty("osx")] public object? OSX { get; set; }
+        [JsonPropertyName("osx")] public object? OSX { get; set; }
 
-        [JsonProperty("linux")] public object? Linux { get; set; }
+        [JsonPropertyName("linux")] public object? Linux { get; set; }
 
-        [JsonProperty("cmd")] public string? Command { get; set; }
+        [JsonPropertyName("cmd")] public string? Command { get; set; }
 
-        [JsonProperty("shell_cmd")] public string? ShellCommand { get; set; }
+        [JsonPropertyName("shell_cmd")] public string? ShellCommand { get; set; }
 
-        [JsonProperty("working_dir")] public string? WorkingDirectory { get; set; }
+        [JsonPropertyName("working_dir")] public string? WorkingDirectory { get; set; }
 
-        [JsonProperty("file_regex")] public string? FileRegex { get; set; }
+        [JsonPropertyName("file_regex")] public string? FileRegex { get; set; }
 
-        [JsonProperty("line_regex")] public string? LineRegex { get; set; }
+        [JsonPropertyName("line_regex")] public string? LineRegex { get; set; }
 
-        [JsonProperty("encoding")] public string? Encoding { get; set; }
+        [JsonPropertyName("encoding")] public string? Encoding { get; set; }
 
-        [JsonProperty("env")] public Dictionary<string, string>? Environment { get; set; }
+        [JsonPropertyName("env")] public Dictionary<string, string>? Environment { get; set; }
 
-        [JsonProperty("quiet")] public bool? Quiet { get; set; }
+        [JsonPropertyName("quiet")] public bool? Quiet { get; set; }
 
-        [JsonProperty("word_wrap")] public bool? WordWrap { get; set; }
+        [JsonPropertyName("word_wrap")] public bool? WordWrap { get; set; }
 
-        [JsonProperty("syntax")] public string? Syntax { get; set; }
+        [JsonPropertyName("syntax")] public string? Syntax { get; set; }
     }
 
 
@@ -147,9 +149,9 @@ public class SublimeGenerator : IGenerator
         //Json comment to tell the user not to edit the file
         file.WriteLine("//This file is generated by Borz. Do not edit this file.");
 
-        file.WriteLine(JsonConvert.SerializeObject(project, Formatting.Indented, new JsonSerializerSettings()
+        file.WriteLine(JsonSerializer.Serialize(project, new JsonSerializerOptions()
         {
-            NullValueHandling = NullValueHandling.Ignore
+            DefaultIgnoreCondition = JsonIgnoreCondition.Always,
         }));
         file.Close();
     }
