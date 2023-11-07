@@ -152,6 +152,7 @@ public class SublimeGenerator : IGenerator
         file.WriteLine(JsonSerializer.Serialize(project, new JsonSerializerOptions()
         {
             DefaultIgnoreCondition = JsonIgnoreCondition.Always,
+            WriteIndented = true
         }));
         file.Close();
     }
