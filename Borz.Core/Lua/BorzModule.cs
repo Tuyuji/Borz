@@ -69,12 +69,24 @@ public class BorzModule
         var nameV = arguments.AsType(0, "project", DataType.String, false);
         var languageV = arguments.AsType(1, "project", DataType.String, false);
         var typeV = arguments.AsType(2, "project", DataType.UserData, false);
+        var tagsV = arguments.AsType(3, "project", DataType.Table, true);
 
         var name = nameV.String;
         var language = languageV.String;
         var type = (BinType)typeV.UserData.Object;
+        List<string> tags = null;
+        if (tagsV.IsNotNil())
+        {
+            tags = tagsV.ToObject<List<string>>();
+        }
 
-        var project = Project.Create(s, name, type, language);
+        var project = (Project)Project.Create(s, name, type, language);
+        if (tags != null)
+            project.Tags = tags;
+
+        var projectCallback = s.Globals["OnProjectCreate"];
+        if (projectCallback is Closure pcd) pcd.Call(project);
+
         return DynValue.FromObject(s, project);
     }
 

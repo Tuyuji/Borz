@@ -14,6 +14,7 @@ public class CppProject : CProject
         StdVersion = "17";
     }
 
+    [MoonSharpHidden]
     public static CppProject Create(Script script, string name, BinType type)
     {
         var proj = new CppProject(name, type, script.GetCwd());

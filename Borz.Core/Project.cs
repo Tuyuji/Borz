@@ -28,6 +28,7 @@ public abstract class Project
     public BinType Type;
     public string Language;
     public string OutputName;
+    public List<string> Tags = new();
 
     public List<Project> Dependencies = new();
 
@@ -81,6 +82,7 @@ public abstract class Project
             Workspace.Projects.Add(this);
     }
 
+    [MoonSharpHidden]
     public static dynamic Create(Script script, string name, BinType type, string language)
     {
         var t = ProjectTypes[language];
@@ -92,10 +94,12 @@ public abstract class Project
         if (p == null)
             throw new Exception("Create method on type " + t.Name + " returned null");
 
-        var projectCallback = script.Globals["OnProjectCreate"];
-        if (projectCallback is Closure pcd) pcd.Call(p);
-
         return p;
+    }
+
+    public bool HasTag(string tag)
+    {
+        return Tags.Contains(tag);
     }
 
     public void AddDep(Project project)

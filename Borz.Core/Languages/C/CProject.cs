@@ -38,6 +38,7 @@ public class CProject : Project
         StdVersion = "11";
     }
 
+    [MoonSharpHidden]
     public static CProject Create(Script script, string name, BinType type)
     {
         var proj = new CProject(name, type, script.GetCwd());
