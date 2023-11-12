@@ -1,6 +1,7 @@
 using System.Collections.Concurrent;
 using System.Reflection;
 using AkoSharp;
+using Borz.Core.Generators;
 using Borz.Core.Lua;
 using Borz.Core.Platform;
 using ByteSizeLib;
@@ -13,6 +14,8 @@ namespace Borz.Core;
 
 public static class Borz
 {
+    public static ConcurrentDictionary<string, Action> Generators = new();
+
     public static ConfigLayers<ConfLevel> Config = new();
 
     public static ParallelOptions ParallelOptions = new();
@@ -21,6 +24,25 @@ public static class Borz
 
     public static ConcurrentQueue<string> BuildLog = new();
     public static Script Script;
+
+    public static bool UseMold
+    {
+        get
+        {
+            var use = false;
+            var conf = Config.Get("linker", "mold");
+            if (conf == true)
+                use = true;
+            return use;
+        }
+    }
+
+    static Borz()
+    {
+        Generators["cmake"] = () => { new CMakeGenerator().Generate(); };
+        Generators["jetbrains"] = () => { new JetbrainsGenerator().Generate(); };
+        Generators["sublime"] = () => { new SublimeGenerator().Generate(); };
+    }
 
     public static void Init()
     {
@@ -83,17 +105,6 @@ public static class Borz
         }
     }
 
-    public static bool UseMold
-    {
-        get
-        {
-            var use = false;
-            var conf = Config.Get("linker", "mold");
-            if (conf == true)
-                use = true;
-            return use;
-        }
-    }
 
     private static void SetupDefaults()
     {
@@ -253,9 +264,20 @@ public static class Borz
         Directory.Delete(path, recursive);
     }
 
-    public static void GenerateWorkspace(IGenerator generator)
+    /// <summary>
+    /// Trys to find the generator with the given name.
+    /// </summary>
+    /// <param name="generator">Name</param>
+    /// <returns>Returns false if not found.</returns>
+    public static bool GenerateWorkspace(string generator)
     {
-        generator.Generate();
+        if (Generators.ContainsKey(generator))
+        {
+            Generators[generator].Invoke();
+            return true;
+        }
+
+        return false;
     }
 
     public static void RunScript(string location)

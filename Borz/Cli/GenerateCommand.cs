@@ -1,8 +1,6 @@
 using System.ComponentModel;
 using System.Diagnostics.CodeAnalysis;
-using System.Reflection;
 using Borz.Core;
-using Borz.Core.Generators;
 using Borz.Resources;
 using Spectre.Console.Cli;
 
@@ -27,38 +25,18 @@ public class GenerateCommand : Command<GenerateCommand.Settings>
 
     public override int Execute([NotNull] CommandContext context, [NotNull] Settings settings)
     {
-        //Find all classes that implement IGenerator with the attribute FriendlyNameAttribute.
-        var genTypes = AppDomain.CurrentDomain.GetAssemblies()
-            .SelectMany(s => s.GetTypes())
-            .Where(p => typeof(IGenerator).IsAssignableFrom(p) && p.IsClass && !p.IsAbstract &&
-                        p.GetCustomAttribute<FriendlyNameAttribute>() != null)
-            .ToArray();
-        //now get the friendly names of all of them.
-        var genNames = genTypes.Select(t => t.GetCustomAttribute<FriendlyNameAttribute>()?.FriendlyName.ToLower())
-            .ToArray();
-
-        //find the index of the generator name in the list of friendly names.
-        //use tolower
-        var genIndex = Array.IndexOf(genNames, settings.Generator.ToLower());
-        if (genIndex == -1)
+        //This runs the build.borz command in the current directory.
+        Workspace.Init(Directory.GetCurrentDirectory());
+        if (!Core.Borz.GenerateWorkspace(settings.Generator.ToLower()))
         {
             Console.WriteLine(Lang.Generate_Error_UnknownGenerator, settings.Generator);
             Console.WriteLine(Lang.Generate_ListAvailableHeader);
-            foreach (var genName in genNames) Console.WriteLine($@"  {genName}");
-
-            return 1;
+            foreach (var generator in Core.Borz.Generators)
+            {
+                Console.WriteLine($@"  {generator.Key}");
+            }
         }
 
-        var generator = Activator.CreateInstance(genTypes[genIndex]) as IGenerator;
-        if (generator == null)
-        {
-            Console.WriteLine(Lang.Generate_Error_UnknownGenerator, settings.Generator);
-            return 1;
-        }
-
-        //This runs the build.borz command in the current directory.
-        Workspace.Init(Directory.GetCurrentDirectory());
-        Core.Borz.GenerateWorkspace(generator);
         return 0;
     }
 }

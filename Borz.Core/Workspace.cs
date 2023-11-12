@@ -2,13 +2,21 @@ using AkoSharp;
 
 namespace Borz.Core;
 
+[BorzUserData]
 public static class Workspace
 {
     public static string Location = string.Empty;
     public static List<Project> Projects = new();
     public static List<string> ExecutedBorzFiles = new();
 
-    public static WorkspaceSettings Settings = new();
+    public static string Name = "Workspace";
+    public static List<string> Configs = new();
+
+    static Workspace()
+    {
+        Configs.Add("debug");
+        Configs.Add("release");
+    }
 
     //Does init for workspace and running the inital borz script in current directory
     public static void Init(string location)

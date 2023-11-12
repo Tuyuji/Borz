@@ -3,8 +3,7 @@ using System.Text.Json.Serialization;
 
 namespace Borz.Core.Generators;
 
-[FriendlyName("Sublime")]
-public class SublimeGenerator : IGenerator
+public class SublimeGenerator
 {
     [Serializable]
     private class SublimeProject
@@ -119,7 +118,7 @@ public class SublimeGenerator : IGenerator
 
     public void Generate()
     {
-        var wsName = Workspace.Settings.Name;
+        var wsName = Workspace.Name;
         var project = new SublimeProject();
 
         //go though workspace projects

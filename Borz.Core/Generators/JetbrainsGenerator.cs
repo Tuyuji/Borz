@@ -7,8 +7,7 @@ namespace Borz.Core.Generators;
 /*
  * This auto generates tools for CLion at least.
  */
-[FriendlyName("Jetbrains")]
-public class JetbrainsGenerator : IGenerator
+public class JetbrainsGenerator
 {
     public class ExternalTools
     {
