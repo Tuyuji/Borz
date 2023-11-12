@@ -1,4 +1,6 @@
 using AkoSharp;
+using QuickGraph;
+using QuickGraph.Algorithms.TopologicalSort;
 
 namespace Borz.Core;
 
@@ -55,5 +57,27 @@ public static class Workspace
     {
         Projects.Clear();
         ExecutedBorzFiles.Clear();
+    }
+
+    public static List<Project>? GetSortedProjectList()
+    {
+        var graph = new AdjacencyGraph<Project, Edge<Project>>();
+        graph.AddVertexRange(Projects);
+        foreach (var project in Projects)
+        foreach (var dependency in project.Dependencies)
+            graph.AddEdge(new Edge<Project>(dependency, project));
+
+        var algorithm = new TopologicalSortAlgorithm<Project, Edge<Project>>(graph);
+        try
+        {
+            algorithm.Compute();
+        }
+        catch (NonAcyclicGraphException e)
+        {
+            MugiLog.Fatal("Cyclic/Circular dependency detected, cannot continue.");
+            return null;
+        }
+
+        return algorithm.SortedVertices.ToList();
     }
 }

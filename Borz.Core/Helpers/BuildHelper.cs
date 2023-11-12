@@ -94,7 +94,7 @@ public class BuildHelper
 
     public static string GetCompileCommandLocation(string language, Project project)
     {
-        bool doWorkspaceCompileCommands = ShouldCombineCommands(language);
+        var doWorkspaceCompileCommands = ShouldCombineCommands(language);
         return Path.Combine(doWorkspaceCompileCommands ? Workspace.Location : project.ProjectDirectory,
             "compile_commands.json");
     }

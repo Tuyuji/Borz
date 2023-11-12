@@ -96,7 +96,7 @@ public class Util
         if (resourceType != ResourceType.Archive)
             return false;
 
-        string[] supportedExtensions = new[]
+        var supportedExtensions = new[]
         {
             ".tar.gz",
             ".zip"

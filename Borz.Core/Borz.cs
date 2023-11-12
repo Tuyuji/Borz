@@ -7,8 +7,6 @@ using Borz.Core.Platform;
 using ByteSizeLib;
 using MoonSharp.Interpreter;
 using MoonSharp.Interpreter.Loaders;
-using QuickGraph;
-using QuickGraph.Algorithms.TopologicalSort;
 
 namespace Borz.Core;
 
@@ -203,24 +201,12 @@ public static class Borz
             Environment.SetEnvironmentVariable("PATH", path);
         }
 
-        var graph = new AdjacencyGraph<Project, Edge<Project>>();
-        graph.AddVertexRange(Workspace.Projects);
-        foreach (var project in Workspace.Projects)
-        foreach (var dependency in project.Dependencies)
-            graph.AddEdge(new Edge<Project>(dependency, project));
-
-        var algorithm = new TopologicalSortAlgorithm<Project, Edge<Project>>(graph);
-        try
-        {
-            algorithm.Compute();
-        }
-        catch (NonAcyclicGraphException e)
+        var sortedProjects = Workspace.GetSortedProjectList();
+        if (sortedProjects == null)
         {
             MugiLog.Fatal("Cyclic/Circular dependency detected, cannot continue.");
             return false;
         }
-
-        var sortedProjects = algorithm.SortedVertices.ToList();
 
         MugiLog.Info($"Config: {BuildConfig.Config}");
 
