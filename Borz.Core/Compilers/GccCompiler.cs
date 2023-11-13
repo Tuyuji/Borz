@@ -13,16 +13,16 @@ public class GccCompiler : CcCompiler
 
     public GccCompiler()
     {
-        if (Borz.BuildConfig.HostPlatform != Borz.BuildConfig.TargetPlatform)
+        if (Workspace.BuildCfg.HostPlatform != Workspace.BuildCfg.TargetPlatform)
         {
             //Cross compiling!
-            if (Borz.BuildConfig.HostPlatform != Lua.Platform.Linux)
+            if (Workspace.BuildCfg.HostPlatform != Lua.Platform.Linux)
                 throw new NotSupportedException("Cross compiling is only supported on Linux for now.");
 
-            var crossTargetTable = Borz.Config.Get("linux64", Borz.BuildConfig.TargetPlatform);
+            var crossTargetTable = Borz.Config.Get("linux64", Workspace.BuildCfg.TargetPlatform);
             if (crossTargetTable == null)
                 throw new NotSupportedException(
-                    $"Cross compiling to {Borz.BuildConfig.TargetPlatform} is not supported yet.");
+                    $"Cross compiling to {Workspace.BuildCfg.TargetPlatform} is not supported yet.");
 
             compilerElf = crossTargetTable["c"];
             cppCompilerElf = crossTargetTable["cxx"];

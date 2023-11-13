@@ -72,10 +72,7 @@ public class GDCCompiler : ICCompiler
 
     private void AddVersion(DProject project, ref List<string> cmdArgs)
     {
-        foreach (var version in project.Versions)
-        {
-            cmdArgs.Add("-fversion=" + version);
-        }
+        foreach (var version in project.Versions) cmdArgs.Add("-fversion=" + version);
     }
 
     public UnixUtil.RunOutput LinkProject(Project inProj, string[] objects)
@@ -87,10 +84,8 @@ public class GDCCompiler : ICCompiler
         var outputPath = project.GetOutputFilePath();
 
         if (project.Type == BinType.StaticLib)
-        {
             return Utils.RunCmd("ar", $"-rcs \"{outputPath}\" " + string.Join(" ", objects.ToArray()),
                 project.ProjectDirectory, JustLog);
-        }
 
         List<string> cmdArgs = new();
 
@@ -190,10 +185,7 @@ public class GDCCompiler : ICCompiler
             return;
         }
 
-        if (project.StdVersion != string.Empty)
-        {
-            args.Add("-std=" + project.StdVersion);
-        }
+        if (project.StdVersion != string.Empty) args.Add("-std=" + project.StdVersion);
     }
 
     public void AddPhobos(DProject project, ref List<string> args)

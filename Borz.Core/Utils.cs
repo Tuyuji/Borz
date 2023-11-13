@@ -25,8 +25,8 @@ public static class Utils
     {
         return input
             .Replace("$WORKSPACEDIR", Workspace.Location)
-            .Replace("$CONFIG", Borz.BuildConfig.Config)
-            .Replace("$TARGETPLATFORM", Borz.BuildConfig.TargetPlatform.ToString());
+            .Replace("$CONFIG", Workspace.BuildCfg.Config)
+            .Replace("$TARGETPLATFORM", Workspace.BuildCfg.TargetPlatform.ToString());
     }
 
     public static string StandardProjectReplace(string input, string projectDir, string projectName)
@@ -38,7 +38,7 @@ public static class Utils
 
     public static string AddPlatformIfixsToFileName(string filename, BinType type)
     {
-        var info = Lua.Platform.GetInfo(Borz.BuildConfig.TargetPlatform);
+        var info = Lua.Platform.GetInfo(Workspace.BuildCfg.TargetPlatform);
         switch (type)
         {
             case BinType.ConsoleApp:

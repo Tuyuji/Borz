@@ -75,10 +75,7 @@ public class BorzModule
         var language = languageV.String;
         var type = (BinType)typeV.UserData.Object;
         List<string> tags = null;
-        if (tagsV.IsNotNil())
-        {
-            tags = tagsV.ToObject<List<string>>();
-        }
+        if (tagsV.IsNotNil()) tags = tagsV.ToObject<List<string>>();
 
         var project = (Project)Project.Create(s, name, type, language);
         if (tags != null)
@@ -131,6 +128,6 @@ public class BorzModule
         var buildConfV = arguments.AsType(0, "isBuildConf", DataType.String, false);
 
         var buildConf = buildConfV.String;
-        return DynValue.NewBoolean(Borz.BuildConfig.ConfigEquals(buildConf));
+        return DynValue.NewBoolean(Workspace.BuildCfg.ConfigEquals(buildConf));
     }
 }

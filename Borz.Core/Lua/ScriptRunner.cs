@@ -33,7 +33,7 @@ public static class ScriptRunner
         script.Globals["dub"] = typeof(Dub);
         script.Globals["log"] = typeof(Log);
         script.Globals["pkgconf"] = typeof(LuaPkgConf);
-        script.Globals["BuildConf"] = Borz.BuildConfig;
+        script.Globals["BuildConf"] = Workspace.BuildCfg;
         script.Globals["ws"] = typeof(Workspace);
         script.Globals["PlatformInfo"] = typeof(PlatformInfo);
         script.Globals["registry"] = typeof(LuaReg);
@@ -70,5 +70,17 @@ public static class ScriptRunner
         if (!Path.IsPathRooted(path))
             path = Path.Combine(script.GetCwd(), path);
         return path;
+    }
+
+    public static void CallPreCompileEvent(this Script script)
+    {
+        var preCompileCallback = script.Globals["OnPreCompile"];
+        if (preCompileCallback is Closure pcd) pcd.Call();
+    }
+
+    public static void CallPostCompileEvent(this Script script)
+    {
+        var postCompileCallback = script.Globals["OnPostCompile"];
+        if (postCompileCallback is Closure pcd) pcd.Call();
     }
 }

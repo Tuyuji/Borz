@@ -13,13 +13,8 @@ namespace Borz.Core;
 public static class Borz
 {
     public static ConcurrentDictionary<string, Action> Generators = new();
-
     public static ConfigLayers<ConfLevel> Config = new();
-
     public static ParallelOptions ParallelOptions = new();
-
-    public static BuildConfig BuildConfig = new();
-
     public static ConcurrentQueue<string> BuildLog = new();
     public static Script Script;
 
@@ -171,101 +166,6 @@ public static class Borz
         ParallelOptions.MaxDegreeOfParallelism = usableThreadCount;
     }
 
-    public static bool CompileWorkspace(bool simulate = false)
-    {
-        UpdateMemInfo();
-
-        if (BuildConfig.TargetPlatform == Lua.Platform.Wasm)
-        {
-            var sdkDir = Config.Get("webasm", "sdk");
-            if (sdkDir == null)
-            {
-                MugiLog.Fatal("WebAssembly SDK directory not set in config.");
-                return false;
-            }
-
-            var sdkPath = Path.GetFullPath(sdkDir);
-            if (!Directory.Exists(sdkPath))
-            {
-                MugiLog.Fatal("WebAssembly SDK directory does not exist.");
-                return false;
-            }
-
-            var upstreamPath = Path.Combine(sdkPath, "upstream", "emscripten");
-
-            var envPathSep = ':';
-
-            //add sdk path to PATH
-            var path = Environment.GetEnvironmentVariable("PATH");
-            path += envPathSep + sdkPath + envPathSep + upstreamPath;
-            Environment.SetEnvironmentVariable("PATH", path);
-        }
-
-        var sortedProjects = Workspace.GetSortedProjectList();
-        if (sortedProjects == null)
-        {
-            MugiLog.Fatal("Cyclic/Circular dependency detected, cannot continue.");
-            return false;
-        }
-
-        MugiLog.Info($"Config: {BuildConfig.Config}");
-
-        CallPreCompileEvent();
-
-        sortedProjects.ForEach(prj =>
-        {
-            MugiLog.Info("===========================================");
-            var builder = BuildFactory.GetBuilder(prj.Language);
-            builder.Build(prj, simulate);
-        });
-
-        CallPostCompileEvent();
-
-        return true;
-    }
-
-    public static bool CleanWorkspace(bool justLog = false)
-    {
-        Workspace.Projects.ForEach(prj =>
-        {
-            var intDir = prj.GetPathAbs(prj.IntermediateDirectory);
-            var outDir = prj.GetPathAbs(prj.OutputDirectory);
-            if (Directory.Exists(intDir))
-                Delete(intDir, true, justLog);
-            if (Directory.Exists(outDir))
-                Delete(outDir, true, justLog);
-        });
-
-        return true;
-    }
-
-    public static void Delete(string path, bool recursive, bool justLog = false)
-    {
-        if (justLog)
-        {
-            MugiLog.Info($"Deleting {path}...");
-            return;
-        }
-
-        Directory.Delete(path, recursive);
-    }
-
-    /// <summary>
-    /// Trys to find the generator with the given name.
-    /// </summary>
-    /// <param name="generator">Name</param>
-    /// <returns>Returns false if not found.</returns>
-    public static bool GenerateWorkspace(string generator)
-    {
-        if (Generators.ContainsKey(generator))
-        {
-            Generators[generator].Invoke();
-            return true;
-        }
-
-        return false;
-    }
-
     public static void RunScript(string location)
     {
         var fullPath = Path.GetFullPath(location);
@@ -288,17 +188,5 @@ public static class Borz
             //rethrow
             throw;
         }
-    }
-
-    public static void CallPreCompileEvent()
-    {
-        var preCompileCallback = Script.Globals["OnPreCompile"];
-        if (preCompileCallback is Closure pcd) pcd.Call();
-    }
-
-    public static void CallPostCompileEvent()
-    {
-        var postCompileCallback = Script.Globals["OnPostCompile"];
-        if (postCompileCallback is Closure pcd) pcd.Call();
     }
 }

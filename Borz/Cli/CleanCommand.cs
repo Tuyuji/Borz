@@ -20,7 +20,7 @@ public class CleanCommand : Command<CleanCommand.Settings>
     public override int Execute([NotNull] CommandContext context, [NotNull] Settings settings)
     {
         Workspace.Init(Directory.GetCurrentDirectory());
-        Core.Borz.CleanWorkspace(settings.JustLog);
+        Workspace.Clean(settings.JustLog);
         return 0;
     }
 }

@@ -27,7 +27,7 @@ public class GenerateCommand : Command<GenerateCommand.Settings>
     {
         //This runs the build.borz command in the current directory.
         Workspace.Init(Directory.GetCurrentDirectory());
-        if (!Core.Borz.GenerateWorkspace(settings.Generator.ToLower()))
+        if (!Workspace.Generate(settings.Generator.ToLower()))
         {
             Console.WriteLine(Lang.Generate_Error_UnknownGenerator, settings.Generator);
             Console.WriteLine(Lang.Generate_ListAvailableHeader);

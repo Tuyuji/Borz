@@ -27,13 +27,17 @@ public class CompileCommand : Command<CompileCommand.Settings>
 
     public override int Execute([NotNull] CommandContext context, [NotNull] Settings settings)
     {
-        Core.Borz.BuildConfig.Config = settings.Config ?? "debug";
-        Core.Borz.BuildConfig.TargetPlatform = settings.Platform;
+        Workspace.BuildCfg.Config = settings.Config ?? "debug";
+        Workspace.BuildCfg.TargetPlatform = settings.Platform;
         Workspace.Init(Directory.GetCurrentDirectory());
 
-        return
-            Core.Borz.CompileWorkspace(settings.JustLog)
-                ? 0
-                : 1;
+        Core.Borz.Script.CallPreCompileEvent();
+        if (Workspace.Compile(settings.JustLog))
+        {
+            Core.Borz.Script.CallPostCompileEvent();
+            return 0;
+        }
+
+        return 1;
     }
 }

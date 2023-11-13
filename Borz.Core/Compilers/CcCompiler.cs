@@ -91,10 +91,8 @@ public abstract class CcCompiler : ICCompiler
         var outputPath = project.GetOutputFilePath();
 
         if (project.Type == BinType.StaticLib)
-        {
             return Utils.RunCmd("ar", $"-rcs \"{outputPath}\" " + string.Join(" ", objects.ToArray()),
                 project.ProjectDirectory, JustLog);
-        }
 
         List<string> cmdArgs = new();
 
@@ -255,7 +253,7 @@ public abstract class CcCompiler : ICCompiler
 
     public void AddDefines(CProject project, ref List<string> args)
     {
-        var platformInfo = Borz.BuildConfig.TargetInfo;
+        var platformInfo = Workspace.BuildCfg.TargetInfo;
         if (platformInfo.Defines != null)
             foreach (var define in platformInfo.Defines)
                 args.Add(define.Value == null ? $"-D{define.Key}" : $"-D{define.Key}={define.Value}");
