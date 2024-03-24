@@ -1,2 +1,0 @@
-paths.output "$WORKSPACEDIR/bin"
-paths.int    "$WORKSPACEDIR/bin-int/$PROJECTNAME"

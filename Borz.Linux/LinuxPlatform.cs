@@ -1,12 +1,10 @@
+using System.Runtime.InteropServices;
 using System.Text.RegularExpressions;
 using AkoSharp;
-using Borz.Core;
-using Borz.Core.Platform;
 using ByteSizeLib;
 
 namespace Borz.Linux;
 
-[ShortType("Platform")]
 public class LinuxPlatform : IPlatform
 {
     public string GetUserConfigPath()
@@ -20,7 +18,6 @@ public class LinuxPlatform : IPlatform
 
     public MemoryInfo GetMemoryInfo()
     {
-        //Do the same thing as above, but using Regex
         var info = File.ReadAllText("/proc/meminfo");
         ByteSize? total = null, available = null;
 

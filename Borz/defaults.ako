@@ -1,0 +1,41 @@
+#Logging
+log.enable+
+log.level "Info"
+
+compilers.c   "gcc"
+compilers.cpp "gcc"
+
+#Not setting this to true for default since
+#I don't know if GCC will error out if its not found.
+#TODO: Have a check if mold exists and prefer it if it does.
+linker.mold-
+
+#Paths
+paths.output "$PROJECTDIR/bin"
+paths.int    "$PROJECTDIR/bin-int/$CONFIG/$TARGET"
+
+ws.name "Workspace"
+configs [["debug", "release"]]
+
+#Project
+project.outputTmpl "$PROJECTNAME-$TARGET"
+
+#Multi-Threading settings
+mt.enable+
+#No idea whats the sane min, please update with better values :)
+mt.minThreadMem "150MB"
+# 0 or -1 for auto.
+mt.maxThreads   -1
+
+#Builder settings
+builder.compileCmds+
+#Prefer a single compile_commands.json in the workspace folder than
+#one in every project folder.
+builder.combineCmds+
+
+#DEBUG
+#This will write to a single file in your temp directory
+#If your on linux your tmp dir is prob a ram disk so this isnt
+#a big deal and helps out a lot when you get a bad compile
+#and dont know why 
+debug.write_log_to_temp+
