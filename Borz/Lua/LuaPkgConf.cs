@@ -84,6 +84,28 @@ public static class LuaPkgConf
         foreach (var (key, value) in ako.TableValue)
         {
             var pkgName = key;
+
+            //pkg+
+            //+pkg
+            PkgConfigInfo? pkg;
+            if (value.Type == AkoVar.VarType.BOOL)
+            {
+                //Dont care for version, or name
+                pkg = PkgConfig.PkgConfig.GetPackage(pkgName);
+                if (pkg == null)
+                {
+                    //if they set: -pkg
+                    //assume its not a requirement
+                    if (value == false)
+                    {
+                        continue;
+                    }
+                    throw new PackageNotFoundException(pkgName, VersionType.None, "");
+                }
+                dict.Add(key, ConvertPkgConfigInfoToPkgDep(pkg));
+                continue;
+            }
+            
             if (value.ContainsKey("name") && value["name"] != null)
                 pkgName = (string)value["name"];
 
@@ -100,7 +122,7 @@ public static class LuaPkgConf
             if (value.ContainsKey("req"))
                 isRequired = (bool)value["req"];
 
-            var pkg = PkgConfig.PkgConfig.GetPackage(pkgName, versionOp, version);
+            pkg = PkgConfig.PkgConfig.GetPackage(pkgName, versionOp, version);
             if (pkg == null && isRequired) throw new PackageNotFoundException(pkgName, versionOp, version);
 
             dict.Add(key, pkg == null ? null : ConvertPkgConfigInfoToPkgDep(pkg));
