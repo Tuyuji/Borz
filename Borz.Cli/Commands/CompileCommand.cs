@@ -34,11 +34,33 @@ public class CompileCommand : Command<CompileCommand.Settings>
 
         if (settings.Target != null)
         {
-            var parsedTarget = CmdUtils.ParseMachine(settings.Target);
+            var parsedTarget = MachineInfo.Parse(settings.Target);
+            if (parsedTarget == null)
+            {
+                MugiLog.Error($"Unknown target: {settings.Target} known targets are:");
+                foreach (var machine in MachineInfo.GetKnownMachines())
+                {
+                    MugiLog.Error(machine.ToString());
+                }
+                
+                return 1;
+            }
+            
             opt.Target = parsedTarget;
         }
         
         CmdUtils.LoadWorkspaceSettings(opt);
+        
+        if (settings.Config != null)
+        {
+            if (!opt.ValidConfigs.Contains(settings.Config))
+            {
+                MugiLog.Error($"{settings.Config} isn't valid.");
+                return 1;
+            }
+            
+            opt.Config = settings.Config;
+        }
         
         var ws = new Workspace(".");
 

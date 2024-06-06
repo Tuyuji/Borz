@@ -1,7 +1,6 @@
 using System.Collections.Concurrent;
 using System.Diagnostics;
 using Borz.Helpers;
-using Borz.Lua;
 
 namespace Borz.Languages.C;
 
@@ -246,5 +245,27 @@ public class CBuilder : Builder
             MugiLog.Fatal(result.Error);
             throw execp;
         }
+
+        //TODO: Figure out a better way than THIS:
+        if (compiler.Opt.Target?.OS == "psx")
+        {
+            //Post process
+            var objcopy = compiler.Opt.GetTarget().GetBinaryPath("objcopy", "objcopy");
+
+            var output = project.GetOutputFilePath(compiler.Opt);
+            
+            List<string> cmdArgs = new();
+            cmdArgs.Add("-O");
+            cmdArgs.Add("binary");
+            cmdArgs.Add(output);
+            cmdArgs.Add(Path.Combine(project.GetOutputDirectory(compiler.Opt), Path.GetFileNameWithoutExtension(output) + ".ps-exe"));
+
+            var ocresult = ProcUtil.RunCmdOptLog(
+                objcopy,
+                String.Join(' ', cmdArgs.ToArray()),
+                project.Directory, compiler.Opt.JustPrint);
+        }
+        
+        
     }
 }

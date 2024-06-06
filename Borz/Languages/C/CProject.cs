@@ -20,6 +20,7 @@ public class CProject : Project
     public string PchHeader = "";
     public bool StaticStdLib = false;
     public bool GenerateRPaths = true;
+    public string Optimisation = "";
     
     
     //Version number for the C or Cpp standard to use.
@@ -423,6 +424,18 @@ public class CProject : Project
                     break;
             }
 
+        foreach (var dependency in Dependencies)
+        {
+            if(dependency is not CProject dep)
+                continue;
+
+            if (dep.Type == BinType.StaticLib)
+            {
+                //Pass on static libs stuff
+                paths.AddRange(dep.GetLibraryPaths(opt));
+            }
+        }
+        
         return paths.ToArray();
     }
 
@@ -472,6 +485,18 @@ public class CProject : Project
             }
         }
 
+        foreach (var dependency in Dependencies)
+        {
+            if(dependency is not CProject dep)
+                continue;
+
+            if (dep.Type == BinType.StaticLib)
+            {
+                //Pass on static libs stuff
+                libs.AddRange(dep.GetLibraries(opt));
+            }
+        }
+        
         return libs.ToArray();
     }
 

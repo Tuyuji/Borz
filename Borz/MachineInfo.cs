@@ -1,5 +1,4 @@
 using System.Runtime.InteropServices;
-using AkoSharp;
 using MoonSharp.Interpreter;
 using MoonSharp.Interpreter.Interop;
 
@@ -18,6 +17,9 @@ public class LangCompileInfo
     public Dictionary<string, string?> Defines = new();
     public List<string> Arguments = new();
     public List<string> LinkArguments = new();
+
+    [MoonSharpVisible(true)]
+    private static LangCompileInfo @new() => new LangCompileInfo();
 }
 
 //borz c --target linux-risv64-sifive-desktop-gcc
@@ -30,36 +32,57 @@ public class MachineInfo
 {
     //linux, macos, windows, android
     public string OS;
+
     //x86_64, x86, arm64, arm32, riskv64
     public string Arch;
-    
+
     //Example: intel, amd, snapdragon, sifive
     public string Vendor { get; init; } = "unknown";
+
     //Example: desktop, mobile, server.
     public string Environment { get; init; } = "unknown";
+
     //Example: gcc, msvc or clang
     public string ABI { get; init; } = "unknown";
 
     public Endianness Endian;
 
     public Dictionary<string, string> Binaries = new();
+
     //What compilers it should use for a language
     //c -> gcc
     public Dictionary<string, string> Compilers = new();
 
     //Contains extra info for langs.
     public Dictionary<string, LangCompileInfo> CompileInfo = new();
-    
+
     public string ExePrefix = "";
     public string ExeExt = "";
     public string SharedLibPrefix = "lib";
     public string SharedLibExt = ".so";
     public string StaticLibPrefix = "lib";
     public string StaticLibExt = ".a";
-    
-    public static MachineInfo UnknownMachine = new MachineInfo("unknown", "unknown");
 
-    public MachineInfo(string os, string arch)
+    public static MachineInfo UnknownMachine = new MachineInfo("unknown", "unknown");
+    public static MachineInfo HostMachine;
+
+    private static List<MachineInfo> _knownMachines = new();
+
+    public static IReadOnlyList<MachineInfo> GetKnownMachines()
+    {
+        return _knownMachines;
+    }
+
+    static MachineInfo()
+    {
+        //add ourselfs to the known machines
+        var os = GetCurrentMachineOS();
+        var arch = ArchitectureToString(RuntimeInformation.ProcessArchitecture);
+        HostMachine = new MachineInfo(os, arch);
+        _knownMachines.Add(HostMachine);
+    }
+
+    private MachineInfo(string os, string arch)
     {
         this.OS = os;
         this.Arch = arch;
@@ -74,22 +97,62 @@ public class MachineInfo
                 SharedLibExt = ".dll";
                 StaticLibPrefix = "";
                 StaticLibExt = ".lib";
-            } break;
+            }
+                break;
             case "macos":
             {
                 SharedLibExt = ".dylib";
-            } break;
+            }
+                break;
         }
     }
-    
+
+    public static MachineInfo? Get(string os, string? arch = null, string? vendor = null, string? env = null,
+        string? abi = null)
+    {
+        foreach (var machine in _knownMachines)
+        {
+            if (machine.OS != os)
+                continue;
+            if (arch != null && machine.Arch != arch)
+                continue;
+            if (vendor != null && machine.Vendor != vendor)
+                continue;
+            if (env != null && machine.Environment != env)
+                continue;
+            if (abi != null && machine.ABI != abi)
+                continue;
+
+            return machine;
+        }
+
+        return null;
+    }
+
+    public static MachineInfo NewOrGet(string os, string arch)
+    {
+        var get = Get(os, arch);
+        if (get != null)
+        {
+            return get;
+        }
+
+        var machine = new MachineInfo(os, arch);
+        _knownMachines.Add(machine);
+        return machine;
+    }
+
     [MoonSharpVisible(true)]
-    private static MachineInfo @new(string os, string arch) => new MachineInfo(os, arch);
-    
+    private static MachineInfo? @get(string os, string arch) => Get(os, arch);
+
+    [MoonSharpVisible(true)]
+    private static MachineInfo? @new(string os, string arch) => NewOrGet(os, arch);
+
     public string GetBinaryPath(string name, string @default)
     {
         return !Binaries.ContainsKey(name) ? @default : Binaries[name];
     }
-    
+
     public bool IsVendorValid() => Vendor != "unknown";
 
     public bool IsEnvValid() => Environment != "unknown";
@@ -108,31 +171,32 @@ public class MachineInfo
         return tuple;
     }
 
-    public static MachineInfo? Parse(string input, MachineInfo? optBase = null)
+    public static MachineInfo? Parse(string input)
     {
+        //what we can search for
+        string os = String.Empty;
+        string? arch = null;
+        string? vendor = null;
+        string? env = null;
+        string? abi = null;
+
         if (!input.Contains('-'))
         {
-            return optBase != null ? new MachineInfo(input, optBase.Arch) : null;
+            //only know os, good enough I guess.
+            os = input;
         }
-        
-        Queue<string> stack = new Queue<string>(input.Split('-'));
-        if (stack.Count < 2)
+        else
         {
-            return null;
-        }
-        
-        var os = stack.Dequeue();
-        var arch = stack.Dequeue();
-        var vendor = stack.Count != 0 ? stack.Dequeue() : "unknown";
-        var env = stack.Count != 0 ? stack.Dequeue() : "unknown";
-        var abi = stack.Count != 0 ? stack.Dequeue() : "unknown";
+            Queue<string> stack = new Queue<string>(input.Split('-'));
+            os = stack.Dequeue();
+            arch = stack.Dequeue();
 
-        return new MachineInfo(os, arch)
-        {
-            Vendor = vendor,
-            Environment = env,
-            ABI = abi
-        };
+            vendor = stack.Count != 0 ? stack.Dequeue() : string.Empty;
+            env = stack.Count != 0 ? stack.Dequeue() : string.Empty;
+            abi = stack.Count != 0 ? stack.Dequeue() : string.Empty;
+        }
+
+        return Get(os, arch, vendor, env, abi);
     }
 
     //Borz sticks to a standard for its Machine info, keep to it.
@@ -173,21 +237,24 @@ public class MachineInfo
                 return Endianness.Unknown;
         }
     }
-    
+
     public static string GetCurrentMachineOS()
     {
         if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
         {
             return "linux";
         }
+
         if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
         {
             return "macos";
         }
+
         if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
         {
             return "windows";
         }
+
         if (RuntimeInformation.IsOSPlatform(OSPlatform.FreeBSD))
         {
             return "freebsd";
@@ -195,12 +262,9 @@ public class MachineInfo
 
         return "unknown";
     }
-    
+
     public static MachineInfo GetCurrentMachineInfo()
     {
-        var os = GetCurrentMachineOS();
-        var arch = ArchitectureToString(RuntimeInformation.ProcessArchitecture);
-        
-        return new MachineInfo(os, arch);
+        return HostMachine;
     }
 }

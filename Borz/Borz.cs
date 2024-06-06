@@ -35,6 +35,14 @@ public static class Borz
         
         ((ScriptLoaderBase)Script.DefaultOptions.ScriptLoader).ModulePaths = new string[] { "./?", "./?.lua" };
         ScriptRunner.RegisterTypes();
+        
+        //Call scripts in user dir
+        if (Directory.Exists(Path.Combine(ConfigFolderPath, "scripts")))
+        {
+            var script = ScriptRunner.CreateScript();
+            ScriptRunner.Eval(script,Path.Combine(ConfigFolderPath, "scripts", "main.lua"));
+        }
+
     }
 
     public static void Shutdown()

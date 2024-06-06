@@ -95,6 +95,7 @@ public abstract class Project
         return ResolveTemplate(optTemplate, defaultTemplate)
             .Replace("$CONFIG", opt.Config)
             .Replace("$TARGET_OS", opt.GetTarget().OS)
+            .Replace("$ARCH", opt.GetTarget().Arch)
             .Replace("$TARGET", opt.GetTarget().ToString());
     }
 

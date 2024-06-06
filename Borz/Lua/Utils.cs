@@ -1,7 +1,5 @@
-using System.Diagnostics;
 using System.IO.Compression;
 using System.Net;
-using AkoSharp;
 using MoonSharp.Interpreter;
 
 namespace Borz.Lua;
@@ -22,6 +20,11 @@ public class Utils
         }
 
         return borzFile;
+    }
+
+    public static string removeFromString(string input, string match)
+    {
+        return input.Replace(match, String.Empty);
     }
 
     public static string AddMachineIfixsToFileName(string filename, BinType binType, MachineInfo info)

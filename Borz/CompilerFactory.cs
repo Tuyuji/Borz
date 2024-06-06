@@ -1,5 +1,4 @@
 using Borz.Compilers;
-using Borz.Languages.C;
 
 namespace Borz;
 
@@ -13,7 +12,9 @@ public class CompilerFactory
     {
         _knownCompilers = new Dictionary<string, CompilerCreationDelete>()
         {
-            { "gcc", opt => new GccCompiler(opt) }
+            { "unix", opt => new UnixCCompiler(opt) },
+            { "gcc", opt => new GccCompiler(opt) },
+            { "psxgcc", opt => new PsxCompiler(opt) },
         };
     }
 

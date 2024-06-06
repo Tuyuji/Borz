@@ -31,6 +31,7 @@ public abstract class CommonUnixCCompiler : CCompiler
         
         AddSymbols(project, ref cmdArgs);
         AddStdVersion(project, ref cmdArgs);
+        AddOptimisation(project, ref cmdArgs);
 
         if (GenerateSourceDependencies)
             cmdArgs.Add("-MMD");
@@ -85,6 +86,7 @@ public abstract class CommonUnixCCompiler : CCompiler
         cmdArgs.Add(outputPath);
 
         AddStdVersion(project, ref cmdArgs);
+        AddOptimisation(project, ref cmdArgs);
 
         cmdArgs.AddRange(objects);
 
@@ -165,6 +167,7 @@ public abstract class CommonUnixCCompiler : CCompiler
         AddPic(project, ref cmdArgs);
         AddSymbols(project, ref cmdArgs);
         AddStdVersion(project, ref cmdArgs);
+        AddOptimisation(project, ref cmdArgs);
         cmdArgs.Add("-o");
         cmdArgs.Add(pchObj);
         cmdArgs.Add("-c");
@@ -244,5 +247,13 @@ public abstract class CommonUnixCCompiler : CCompiler
     public void AddLibraries(CProject project, ref List<string> args)
     {
         foreach (var library in project.GetLibraries(Opt)) args.Add($"-l{library}");
+    }
+
+    public void AddOptimisation(CProject project, ref List<string> args)
+    {
+        if (project.Optimisation != String.Empty)
+        {
+            args.Add($"-O{project.Optimisation}");
+        }
     }
 }

@@ -29,6 +29,7 @@ public static class ScriptRunner
         script.Globals.RegisterModuleType<BorzModule>();
         script.Globals["Project"] = typeof(Project);
         script.Globals["MachineInfo"] = typeof(MachineInfo);
+        script.Globals["LangCompileInfo"] = typeof(LangCompileInfo);
         script.Globals["util"] = typeof(Utils);
         script.Globals["dir"] = typeof(LuaDir);
         script.Globals["file"] = typeof(LuaFile);
@@ -41,6 +42,7 @@ public static class ScriptRunner
         script.Globals["Lang"] = typeof(Lang);
         script.Globals["Language"] = typeof(Lang);
         script.Globals["ResourceType"] = typeof(Utils.ResourceType);
+        script.Globals["Endianness"] = typeof(Endianness);
         // script.Globals["Platform"] = typeof(Platform);
         // script.Globals["VersionType"] = typeof(VersionType);
         // script.Globals["PhobosType"] = typeof(PhobosType);

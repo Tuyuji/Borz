@@ -1,5 +1,3 @@
-using Borz.PkgConfig;
-
 namespace Borz.PkgConfig;
 
 public enum VersionType : uint
