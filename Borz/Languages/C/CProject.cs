@@ -30,7 +30,7 @@ public class CProject : Project
     public CProject(string name, BinType type, string directory) : base(name, type, directory)
     {
         Language = Lang.C;
-        StdVersion = "11";
+        StdVersion = "c11";
     }
     
     #region Lua specific
@@ -505,7 +505,13 @@ public class CProject : Project
         Dictionary<string, string?> defs =
             Defines.ToDictionary(valuePair => valuePair.Key, valuePair => valuePair.Value);
 
-        foreach (var valuePair in PkgDeps.SelectMany(dep => dep.Key.Defines)) defs.Add(valuePair.Key, valuePair.Value);
+        foreach (var valuePair in PkgDeps.SelectMany(dep => dep.Key.Defines))
+        {
+            if(defs.ContainsKey(valuePair.Key))
+                defs[valuePair.Key] = valuePair.Value;    
+            else
+                defs.Add(valuePair.Key, valuePair.Value);
+        }
 
         return defs;
     }

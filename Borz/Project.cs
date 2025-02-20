@@ -1,4 +1,5 @@
 using Borz.Languages.C;
+using Borz.Languages.D;
 using Borz.Lua;
 using MoonSharp.Interpreter;
 
@@ -12,7 +13,8 @@ public abstract class Project
     public static Dictionary<string, ProjectionCreateDelegate> KnownProjectTypes = new()
     {
         { Lang.C, (name, type, directory) => new CProject(name, type, directory) },
-        { Lang.Cpp, (name, type, directory) => new CppProject(name, type, directory) }
+        { Lang.Cpp, (name, type, directory) => new CppProject(name, type, directory) },
+        { Lang.D, (name, type, directory) => new DProject(name, type, directory) },
     };
 
     public Workspace? Owner = null;
@@ -23,6 +25,8 @@ public abstract class Project
     public string Directory;
     public string Language = string.Empty;
     public List<string> Tags = new();
+    public string License = string.Empty;
+    public List<string> LicenseFiles = new();
 
     public List<Project> Dependencies = new();
 
@@ -58,7 +62,7 @@ public abstract class Project
     public void AddDep(Project project)
     {
         if (project == null)
-            throw new Exception("Cannot add null project as dependency");
+            throw new ScriptRuntimeException("Cannot add null project as dependency");
 
         if (Dependencies.Contains(project))
             return;
@@ -130,8 +134,17 @@ public abstract class Project
     public string GetOutputFilePath(Options opt)
     {
         var outputName = GetOutputName(opt);
+        if (Path.HasExtension(outputName))
+        {
+            return Path.Combine(GetOutputDirectory(opt), outputName);
+        }
         var outputFileName = Utils.AddMachineIfixsToFileName(outputName, Type, opt.GetTarget());
         return Path.Combine(GetOutputDirectory(opt), outputFileName);
+    }
+
+    public List<string> GetLicenseFilesAbs()
+    {
+        return LicenseFiles.Select(GetPathAbs).ToList();
     }
     
     public string GetPathAbs(string input)

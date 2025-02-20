@@ -97,13 +97,21 @@ public class MachineInfo
                 SharedLibExt = ".dll";
                 StaticLibPrefix = "";
                 StaticLibExt = ".lib";
-            }
-                break;
+            } break;
             case "macos":
             {
                 SharedLibExt = ".dylib";
-            }
-                break;
+            } break;
+            case "web":
+            {
+                ExePrefix = "";
+                SharedLibPrefix = "lib";
+                StaticLibPrefix = "lib";
+                
+                ExeExt = ".html";
+                SharedLibExt = ".so";
+                StaticLibExt = ".a";
+            } break;
         }
     }
 
@@ -114,13 +122,13 @@ public class MachineInfo
         {
             if (machine.OS != os)
                 continue;
-            if (arch != null && machine.Arch != arch)
+            if ((arch != null || arch == "unknown") && machine.Arch != arch)
                 continue;
-            if (vendor != null && machine.Vendor != vendor)
+            if ((arch != null || arch == "unknown") && machine.Vendor != vendor)
                 continue;
-            if (env != null && machine.Environment != env)
+            if ((arch != null || arch == "unknown") && machine.Environment != env)
                 continue;
-            if (abi != null && machine.ABI != abi)
+            if ((arch != null || arch == "unknown") && machine.ABI != abi)
                 continue;
 
             return machine;
@@ -161,6 +169,12 @@ public class MachineInfo
 
     public override string ToString()
     {
+        //TODO: we should update this to cull as much unknowns as possible.
+        //we want to keep unknowns if the next thing is known
+        //some examples:
+        //linux-x86_64-unknown-unknown-unknown is just linux-x86_64
+        //but linux-x86_64-unknown-unknown-clang is just that since we shouldnt cull the middle.
+        //we should make it so instead of unknown its properly filled.
         string tuple = $"{OS}-{Arch}";
         if (IsVendorValid())
             tuple += $"-{Vendor}";

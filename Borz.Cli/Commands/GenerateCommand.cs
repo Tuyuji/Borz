@@ -8,15 +8,12 @@ namespace Borz.Cli.Commands;
 
 [SuppressMessage("ReSharper", "RedundantNullableFlowAttribute")]
 [SuppressMessage("ReSharper", "UnusedAutoPropertyAccessor.Global")]
-public class CompileCommand : Command<CompileCommand.Settings>
+public class GenerateCommand : Command<GenerateCommand.Settings>
 {
     public sealed class Settings : CommandSettings
     {
-        [LocalDesc("Compile.Desc.Simulate")]
-        [CommandOption("-n|--just-log")]
-        [DefaultValue(false)]
-        public bool Simulate { get; init; }
-
+        [CommandArgument(0, "<generator>")] public string Generator { get; set; }
+        
         [LocalDesc("Compile.Desc.Target")]
         [CommandOption("-t|--target")]
         [DefaultValue(null)]
@@ -29,7 +26,6 @@ public class CompileCommand : Command<CompileCommand.Settings>
     {
         var opt = new Options()
         {
-            JustPrint = settings.Simulate
         };
 
         if (settings.Target != null)
@@ -77,9 +73,21 @@ public class CompileCommand : Command<CompileCommand.Settings>
 
         ScriptRunner.Eval(script, scriptPath);
 
+        var generator = GeneratorFactory.TryGetGenerator(settings.Generator);
+        if (generator == null)
+        {
+            MugiLog.Error($"No generator found for {settings.Generator}");
+            return 1;
+        }
+        
         try
         {
-            ws.Compile(opt);
+            var (success, error) = generator.Generate(ws, opt);
+            if (!success)
+            {
+                MugiLog.Error(error);
+                return 1;
+            }
         }
         catch (Exception ex)
         {

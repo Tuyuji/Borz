@@ -9,7 +9,7 @@ public class CBuilder : Builder
     
     public override (bool, string) Build(Project inproject, Options opt)
     {
-        if (inproject.Language is not (Lang.C or Lang.Cpp))
+        if (inproject.Language is not (Lang.C or Lang.Cpp or Lang.D))
         {
             return (false, "Unsupported language.");
         }

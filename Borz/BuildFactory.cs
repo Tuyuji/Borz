@@ -11,6 +11,7 @@ public class BuildFactory
         var cBuilder = new CBuilder();
         _knownBuilders.Add(Lang.C, cBuilder);
         _knownBuilders.Add(Lang.Cpp, cBuilder);
+        _knownBuilders.Add(Lang.D, cBuilder);
     }
 
     public static Builder GetBuilder(string language)

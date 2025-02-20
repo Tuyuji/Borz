@@ -30,6 +30,8 @@ public interface IPlatform
         }
     }
 
+    public void Init();
+
     public MemoryInfo GetMemoryInfo();
 
     //This isn't for the borz folder, but for the user's config folder

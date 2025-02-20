@@ -4,6 +4,7 @@ log.level "Info"
 
 compilers.c   "gcc"
 compilers.cpp "gcc"
+compilers.d   "gdc"
 
 #Not setting this to true for default since
 #I don't know if GCC will error out if its not found.
@@ -15,7 +16,7 @@ paths.output "$PROJECTDIR/bin"
 paths.int    "$PROJECTDIR/bin-int/$CONFIG/$TARGET"
 
 ws.name "Workspace"
-configs [["debug", "release"]]
+configs [["debug" "release"]]
 
 #Project
 project.outputTmpl "$PROJECTNAME"

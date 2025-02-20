@@ -1,3 +1,4 @@
+using System.Runtime.InteropServices;
 using Borz.Helpers;
 using Borz.Languages.C;
 using Microsoft.VisualBasic;
@@ -73,7 +74,6 @@ public abstract class CommonUnixCCompiler : CCompiler
         if(inPrj is not CProject project)
             throw new Exception("Project is not a CppProject or CProject");
         
-        
         var outputPath = project.GetOutputFilePath(Opt);
         
         if(project.Type == BinType.StaticLib)
@@ -82,8 +82,9 @@ public abstract class CommonUnixCCompiler : CCompiler
         
         List<string> cmdArgs = new();
 
-        cmdArgs.Add("-o");
-        cmdArgs.Add(outputPath);
+        AddLinkOptions_Early(project, ref cmdArgs);
+        
+        AddOutput(project, ref cmdArgs);
 
         AddStdVersion(project, ref cmdArgs);
         AddOptimisation(project, ref cmdArgs);
@@ -91,7 +92,13 @@ public abstract class CommonUnixCCompiler : CCompiler
         cmdArgs.AddRange(objects);
 
         foreach (var rpath in project.GetRPaths(project.GetOutputDirectory(Opt), Opt))
-            cmdArgs.Add($"-Wl,-rpath=$ORIGIN/{rpath}");
+        {
+            if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
+                cmdArgs.Add($"-Wl,-rpath,@loader_path/{rpath}");
+            else
+                cmdArgs.Add($"-Wl,-rpath,$ORIGIN/{rpath}");
+        }
+
         
         if (Opt.GetTarget().CompileInfo.TryGetValue(project.Language, out var info))
         {
@@ -177,12 +184,24 @@ public abstract class CommonUnixCCompiler : CCompiler
             Strings.Join(cmdArgs.ToArray())!, project.Directory, Opt.JustPrint);
     }
 
-    public void AddSymbols(CProject project, ref List<string> args)
+    public virtual void AddLinkOptions_Early(CProject project, ref List<string> args)
+    {
+        
+    }
+    
+    public virtual void AddOutput(CProject project, ref List<string> args)
+    {
+        var outputPath = project.GetOutputFilePath(Opt);
+        args.Add("-o");
+        args.Add(outputPath);
+    }
+    
+    public virtual void AddSymbols(CProject project, ref List<string> args)
     {
         args.Add(project.Symbols ? "-g" : "-s");
     }
     
-    public void AddStdVersion(CProject project, ref List<string> args)
+    public virtual void AddStdVersion(CProject project, ref List<string> args)
     {
         if (project.StdVersion == "none")
         {
@@ -193,10 +212,14 @@ public abstract class CommonUnixCCompiler : CCompiler
         if (project.StdVersion != string.Empty)
         {
             if (project.StdVersion.All(char.IsDigit))
+            {
                 args.Add($"-std=" + (project is CppProject ? "c++" : "c") + project.StdVersion);
+            }
             else
+            {
                 //just pass what ever they put in
                 args.Add($"-std=" + project.StdVersion);
+            }
         }
     }
     
@@ -244,7 +267,7 @@ public abstract class CommonUnixCCompiler : CCompiler
         foreach (var libraryPath in project.GetLibraryPaths(Opt)) args.Add($"-L{libraryPath}");
     }
 
-    public void AddLibraries(CProject project, ref List<string> args)
+    public virtual void AddLibraries(CProject project, ref List<string> args)
     {
         foreach (var library in project.GetLibraries(Opt)) args.Add($"-l{library}");
     }

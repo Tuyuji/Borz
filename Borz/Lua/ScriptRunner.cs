@@ -1,4 +1,5 @@
 using System.Reflection;
+using Borz.Languages.D;
 using Borz.PkgConfig;
 using MoonSharp.Interpreter;
 
@@ -18,6 +19,7 @@ public static class ScriptRunner
         UserData.RegisterType<EventArgs>();
         UserData.RegisterType<BinType>();
         UserData.RegisterType<Endianness>();
+        UserData.RegisterType<PhobosType>();
         UserData.RegisterType<VersionType>();
         UserData.RegisterType<Workspace.ProjectAddedEvent>();
     }
@@ -45,7 +47,7 @@ public static class ScriptRunner
         script.Globals["Endianness"] = typeof(Endianness);
         // script.Globals["Platform"] = typeof(Platform);
         // script.Globals["VersionType"] = typeof(VersionType);
-        // script.Globals["PhobosType"] = typeof(PhobosType);
+        script.Globals["PhobosType"] = typeof(PhobosType);
 
         return script;
     }
@@ -89,12 +91,10 @@ public static class ScriptRunner
         {
             script.DoFile(fullPath);
         }
-        catch (Exception exception)
+        catch (InterpreterException exception)
         {
-            if (exception is InterpreterException runtimeError)
-                MugiLog.Fatal(runtimeError.DecoratedMessage);
-            else
-                MugiLog.Fatal(exception.Message);
+            MugiLog.Fatal(exception.DecoratedMessage);
+            MugiLog.Fatal(exception.StackTrace ?? string.Empty);
 
             MugiLog.Wait();
             MugiLog.Shutdown();

@@ -16,6 +16,22 @@ public class LinuxPlatform : IPlatform
         return xdgConfigHome;
     }
 
+    public void Init()
+    {
+        //add mingw
+        var mingw = MachineInfo.NewOrGet("windows", "x86_64");
+        mingw.Binaries = new()
+        {
+            {"gcc", "x86_64-w64-mingw32-gcc"},
+            {"g++", "x86_64-w64-mingw32-g++"},
+        };
+        mingw.Compilers = new()
+        {
+            {"c", "gcc"},
+            {"cpp", "gcc"}
+        };
+    }
+
     public MemoryInfo GetMemoryInfo()
     {
         var info = File.ReadAllText("/proc/meminfo");

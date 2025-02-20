@@ -20,6 +20,8 @@ public static class Borz
         SetupDefaults(); //Load defaults into Config
         LoadUserConfig(); //Load user config into Config
         
+        IPlatform.Instance.Init();
+        
         //safe to assume that the users preferred log level is set in Config.
         //but the environment variable is always preferred over the config.
         var loglevel = Environment.GetEnvironmentVariable("BORZ_LL");

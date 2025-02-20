@@ -8,6 +8,7 @@ app.Configure(config =>
 {
     config.Settings.ApplicationName = "Borz";
     config.AddCommand<CompileCommand>("compile").WithAlias("c");
+    config.AddCommand<GenerateCommand>("generate").WithAlias("g");
 });
 
 var res = 1;
