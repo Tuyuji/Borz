@@ -107,7 +107,7 @@ public class CProject : Project
             if (v.Type != DataType.String)
                 throw new ScriptRuntimeException("Expected string elements in table");
 
-            AddSourceFile(v.String);
+            AddSourceGlob(v.String);
         }
     }
 
