@@ -3,12 +3,20 @@ using Borz.Languages.C;
 
 namespace Borz.Tests;
 
-public class BuildTest
+[TestFixture]
+public class BuildTest : CommonBorzTest
 {
+    [Test]
+    public void Atleast_One_Core_Available()
+    {
+        var threadCount = Borz.GetUsableThreadCount();
+        Assert.GreaterOrEqual(threadCount, 1);
+        MugiLog.Info($"Usable threads: {threadCount}");
+    }
+    
     [Test]
     public void BuildHelloWorld()
     {
-        Borz.Init();
         //Do a simple hello world compile
         //make a temp directory
 
@@ -51,8 +59,6 @@ int main(int argc, char** argv) {
         var output = proc.StandardOutput.ReadToEnd();
         Assert.That(proc.ExitCode, Is.EqualTo(0));
         Assert.That(output, Is.EqualTo("Hello, World!"));
-        
-        Borz.Shutdown();
     }
     
 }
