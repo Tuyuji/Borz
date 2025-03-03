@@ -185,7 +185,7 @@ public class MachineInfo
         return tuple;
     }
 
-    public static MachineInfo? Parse(string input)
+    public static MachineInfo? Parse(string input, bool shouldCreate = true)
     {
         //what we can search for
         string os = String.Empty;
@@ -210,7 +210,20 @@ public class MachineInfo
             abi = stack.Count != 0 ? stack.Dequeue() : string.Empty;
         }
 
-        return Get(os, arch, vendor, env, abi);
+        var machine = Get(os, arch, vendor, env, abi);
+        if(machine == null && shouldCreate)
+        {
+            //Doesnt exist, create it.
+            machine = new MachineInfo(os, arch ?? "unknown")
+            {
+                Vendor = vendor ?? "unknown",
+                Environment = env ?? "unknown",
+                ABI = abi ?? "unknown"
+            };
+            _knownMachines.Add(machine);
+        }
+        
+        return machine;
     }
 
     //Borz sticks to a standard for its Machine info, keep to it.

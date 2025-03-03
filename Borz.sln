@@ -8,6 +8,8 @@ Project("{D954291E-2A0B-460D-934E-DC6B0785DB48}") = "Borz.Linux", "Borz.Linux\Bo
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Borz.Cli", "Borz.Cli\Borz.Cli.csproj", "{2BB741E8-673C-4675-8AE1-19391C914D8A}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Platforms", "Platforms", "{C6282286-7577-49F8-AACC-D745F8C3284B}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -26,5 +28,8 @@ Global
 		{2BB741E8-673C-4675-8AE1-19391C914D8A}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{2BB741E8-673C-4675-8AE1-19391C914D8A}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{2BB741E8-673C-4675-8AE1-19391C914D8A}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{A12DCAA3-76E7-470C-8B52-2320A6A36ECA} = {C6282286-7577-49F8-AACC-D745F8C3284B}
 	EndGlobalSection
 EndGlobal
