@@ -19,13 +19,21 @@ public class Workspace
 
     public event ProjectAddedEvent OnProjectAdded;
 
-    public Workspace(string dir)
+    public Workspace(string dir, string? name = null)
     {
         if (!Directory.Exists(dir))
             throw new Exception("Directory given doesn't exist.");
-        
-        Name = Borz.Config.Get("ws", "name");
 
+        if (Borz.Config.Get("ws", "name") != null)
+        {
+            Name = Borz.Config.Get("ws", "name");
+        }
+
+        if (name != null)
+        {
+            Name = name;
+        }
+        
         Location = Path.GetFullPath(dir);
     }
 
