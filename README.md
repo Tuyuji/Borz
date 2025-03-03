@@ -1,5 +1,3 @@
-# Warning: rewrite is in progress, this will destroy compatibility with current borz projects.
-
 # Borz
 
 A build system using Lua.

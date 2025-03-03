@@ -1,12 +1,10 @@
+using System.Runtime.InteropServices;
 using System.Text.RegularExpressions;
 using AkoSharp;
-using Borz.Core;
-using Borz.Core.Platform;
 using ByteSizeLib;
 
 namespace Borz.Linux;
 
-[ShortType("Platform")]
 public class LinuxPlatform : IPlatform
 {
     public string GetUserConfigPath()
@@ -18,9 +16,24 @@ public class LinuxPlatform : IPlatform
         return xdgConfigHome;
     }
 
+    public void Init()
+    {
+        //add mingw
+        var mingw = MachineInfo.NewOrGet("windows", "x86_64");
+        mingw.Binaries = new()
+        {
+            {"gcc", "x86_64-w64-mingw32-gcc"},
+            {"g++", "x86_64-w64-mingw32-g++"},
+        };
+        mingw.Compilers = new()
+        {
+            {"c", "gcc"},
+            {"cpp", "gcc"}
+        };
+    }
+
     public MemoryInfo GetMemoryInfo()
     {
-        //Do the same thing as above, but using Regex
         var info = File.ReadAllText("/proc/meminfo");
         ByteSize? total = null, available = null;
 
