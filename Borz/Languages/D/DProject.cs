@@ -8,6 +8,8 @@ public class DProject : CProject
 {
     public List<string> Versions { get; } = new();
     public PhobosType PhobosType { get; set; } = PhobosType.NotSet;
+
+    public List<string> PreviewFlags = new(); 
     
     public DProject(string name, BinType type, string directory) : base(name, type, directory)
     {
@@ -15,6 +17,11 @@ public class DProject : CProject
         StdVersion = String.Empty;
     }
 
+    public void AddPreviewFlag(string flag)
+    {
+        PreviewFlags.Add(flag);
+    }
+    
     public void AddVersion(string version)
     {
         Versions.Add(version);

@@ -7,6 +7,8 @@ public class Options
 {
     public List<string> ValidConfigs = ["debug", "release"];
     public string Config;
+    //Should build the unit tests?
+    public bool UnitTest = false;
 
     public bool JustPrint = false;
     

@@ -15,6 +15,7 @@ public class CompilerFactory
             { "unix", opt => new UnixCCompiler(opt) },
             { "gcc", opt => new GccCompiler(opt) },
             { "gdc", opt => new GdcCompiler(opt) },
+            { "ldc", opt => new LdcCompiler(opt) },
             { "psxgcc", opt => new PsxCompiler(opt) },
             { "emcc", opt => new EmscriptCompiler(opt) },
         };

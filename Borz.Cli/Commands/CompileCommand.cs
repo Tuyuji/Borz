@@ -16,6 +16,11 @@ public class CompileCommand : Command<CompileCommand.Settings>
         [CommandOption("-n|--just-log")]
         [DefaultValue(false)]
         public bool Simulate { get; init; }
+        
+        [LocalDesc("Compile.Desc.UnitTest")]
+        [CommandOption("-u|--unittest")]
+        [DefaultValue(false)]
+        public bool UnitTest { get; init; }
 
         [LocalDesc("Compile.Desc.Target")]
         [CommandOption("-t|--target")]
@@ -29,7 +34,8 @@ public class CompileCommand : Command<CompileCommand.Settings>
     {
         var opt = new Options()
         {
-            JustPrint = settings.Simulate
+            JustPrint = settings.Simulate,
+            UnitTest = settings.UnitTest,
         };
 
         if (settings.Target != null)

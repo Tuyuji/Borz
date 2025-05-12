@@ -56,5 +56,11 @@ namespace Borz.Cli.Resources {
                 return ResourceManager.GetString("Compile.Desc.Target", resourceCulture);
             }
         }
+        
+        internal static string Compile_Desc_UnitTest {
+            get {
+                return ResourceManager.GetString("Compile.Desc.UnitTest", resourceCulture);
+            }
+        }
     }
 }

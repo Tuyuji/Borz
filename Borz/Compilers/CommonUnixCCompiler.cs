@@ -130,12 +130,17 @@ public abstract class CommonUnixCCompiler : CCompiler
         return Path.Combine(project.GetIntermediateDirectory(Opt), fileName + PchExt);
     }
 
+    protected virtual string GetDependencyFileExt()
+    {
+        return ".d";
+    }
+    
     public override (bool success, string[] dependencies) GetDependencies(Project project, string objectFile)
     {
         //find dependency file for source file
         //this will be the source files name with .d appended located in the projects intermediate directory
         var depFile = Path.Combine(project.GetIntermediateDirectory(Opt),
-            Path.GetFileNameWithoutExtension(objectFile) + ".d");
+            Path.GetFileNameWithoutExtension(objectFile) + GetDependencyFileExt());
         
         var dependencies = Array.Empty<string>();
 

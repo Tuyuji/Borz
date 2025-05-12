@@ -12,6 +12,7 @@ public class GeneratorFactory
         _knownGenerators.Add("jb", new JetbrainsGenerator());
         _knownGenerators.Add("ninja", new NinjaGenerator());
         _knownGenerators.Add("nml", new NomnomlGen());
+        _knownGenerators.Add("subl", new SublimeGenerator());
     }
 
     public static Generator? TryGetGenerator(string name)

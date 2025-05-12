@@ -24,4 +24,7 @@
     <data name="Compile.Desc.Target" xml:space="preserve">
         <value>Set the target machine to compile for.</value>
     </data>
+    <data name="Compile.Desc.UnitTest" xml:space="preserve">
+        <value>Should compile in unit tests.</value>
+    </data>
 </root>
